@@ -24,6 +24,7 @@ export async function createPage(prevState: any, formData: FormData) {
         alias = crypto.randomUUID()
     }
 
+    // TODO: Handle error
     if (!alias) {
         return { error: "Alias could not be generated." }
     }
@@ -57,6 +58,7 @@ export async function createPage(prevState: any, formData: FormData) {
     }
 
     // Generate secret token for everyone, though mostly used for anon
+    // ???
     const editToken = crypto.randomUUID()
 
     const pageData: Prisma.PageUncheckedCreateInput = {
@@ -64,6 +66,7 @@ export async function createPage(prevState: any, formData: FormData) {
         isPublic: true,
         type: "list",
         ownerId: ownerId ?? null,
+        // ???
         editToken
     }
 

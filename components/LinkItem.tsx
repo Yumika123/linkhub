@@ -39,20 +39,25 @@ export function LinkItem({ link, variant = "list" }: LinkItemProps) {
             href={link.url}
             target={link.target}
             rel="noopener noreferrer"
-            className="block w-full p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow hover:bg-gray-50 flex items-center gap-4"
+            className="block w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-300 flex items-center gap-4 group"
         >
-            {link.image && (
+            {link.image ? (
                 <div className="relative w-12 h-12 flex-shrink-0">
                     <Image
                         src={link.image}
                         alt={link.title}
                         fill
-                        className="object-cover rounded-md"
+                        className="object-cover rounded-lg"
                     />
+                </div>
+            ) : (
+                <div className="w-12 h-12 flex-shrink-0 bg-white/10 rounded-lg flex items-center justify-center text-white/50">
+                    <span className="text-xl">#</span>
                 </div>
             )}
             <div className="flex-grow">
-                <h3 className="font-medium text-gray-900">{link.title}</h3>
+                <h3 className="font-medium text-white group-hover:text-blue-200 transition-colors">{link.title}</h3>
+                <p className="text-sm text-white/40 truncate">{link.url}</p>
             </div>
         </a>
     )

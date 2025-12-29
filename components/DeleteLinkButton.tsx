@@ -1,18 +1,21 @@
-"use client"
+"use client";
 
-import { deleteLink } from "@/app/actions/links"
-import { useTransition } from "react"
+import { deleteLink } from "@/app/actions/links";
+import { useTransition } from "react";
+import { Button } from "@/components/ui";
 
 export function DeleteLinkButton({ linkId }: { linkId: string }) {
-    const [isPending, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition();
 
-    return (
-        <button
-            onClick={() => startTransition(() => deleteLink(linkId))}
-            disabled={isPending}
-            className="text-red-500 hover:text-red-700 text-sm font-medium px-3 py-1 bg-red-50 rounded hover:bg-red-100 transition-colors"
-        >
-            {isPending ? "Deleting..." : "Delete"}
-        </button>
-    )
+  return (
+    <Button
+      onClick={() => startTransition(() => deleteLink(linkId))}
+      disabled={isPending}
+      variant="danger"
+      buttonSize="sm"
+      rounded="lg"
+    >
+      {isPending ? "Deleting..." : "Delete"}
+    </Button>
+  );
 }

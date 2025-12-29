@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  font-family: 'Inter', sans-serif;
 }
 
 @theme inline {
@@ -10,6 +11,26 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Spacing Tokens */
+  --spacing-page: 2rem;
+  --spacing-section: 4rem;
+  --spacing-card-p: 1.5rem;
+  --spacing-card-gap: 1rem;
+  --spacing-element-gap: 0.5rem;
+
+  /* Typography Tokens */
+  --text-display: 3.5rem;
+  --text-h1: 2.5rem;
+  --text-h2: 2rem;
+  --text-h3: 1.5rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-xs: 0.75rem;
+
+  --font-weight-heading: 800;
+  --font-weight-subheading: 600;
+  --font-weight-body: 400;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +40,52 @@
   }
 }
 
+/* User Design Utilities */
+@layer utilities {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@keyframes gradient-xy {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-xy {
+  animation: gradient-xy 15s ease infinite;
+  will-change: background-position;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
 }

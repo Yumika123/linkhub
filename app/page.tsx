@@ -2,6 +2,8 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { CreatePageForm } from "@/components/CreatePageForm"
+import { GradientBackground } from "@/components/GradientBackground"
+import { Button } from "@/components/ui"
 
 export default async function Home() {
   const session = await auth()
@@ -11,35 +13,42 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white text-black p-8 text-center">
-      <main className="max-w-2xl space-y-8">
+    <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white flex flex-col items-center justify-center p-8 text-center">
+      <GradientBackground />
+
+      <main className="relative z-10 max-w-2xl space-y-8 animate-float">
         <div className="space-y-4">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl">
+          <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl drop-shadow-lg">
             Linkhub
           </h1>
-          <p className="text-xl text-gray-500 sm:text-2xl">
+          <p className="text-xl text-blue-100/80 sm:text-2xl max-w-2xl mx-auto font-light leading-relaxed">
             One link for everything. Share your links, social media profiles, and more with a single URL.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <CreatePageForm className="w-full sm:w-auto" isAuthenticated={false} />
+        <div className="glass-card p-8 rounded-3xl flex flex-col sm:flex-row gap-6 justify-center items-center backdrop-blur-md bg-white/5 border-white/10">
+          <CreatePageForm
+            className="w-full sm:w-auto"
+            isAuthenticated={false}
+            variant="primary"
+          />
 
-          <span className="text-gray-400">or</span>
+          <span className="text-white/40 font-medium">or</span>
 
-          <Link
+          <Button
+            as="link"
             href="/api/auth/signin"
-            className="px-8 py-3 rounded-full border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors text-lg"
+            variant="glass"
           >
             Sign In
-          </Link>
+          </Button>
         </div>
-        <p className="text-sm text-gray-500 max-w-md mx-auto">
+        <p className="text-sm text-blue-200/60 max-w-md mx-auto">
           Create an anonymous page instantly, or sign in to manage multiple pages and custom aliases.
         </p>
       </main>
 
-      <footer className="absolute bottom-8 text-gray-400 text-sm">
+      <footer className="absolute bottom-8 text-blue-200/40 text-sm">
         © {new Date().getFullYear()} Linkhub. Built with Next.js & Prisma.
       </footer>
     </div>
