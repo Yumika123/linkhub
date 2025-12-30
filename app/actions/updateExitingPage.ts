@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 
-export async function updatePage(pageId: string, data: { type?: string, isPublic?: boolean }) {
+export async function updatePage(pageId: string, data: { type?: string, isPublic?: boolean, title?: string, description?: string }) {
     const session = await auth()
     const cookieStore = await cookies()
     const editToken = cookieStore.get('linkhub_edit_token')?.value

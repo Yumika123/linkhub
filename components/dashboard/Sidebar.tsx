@@ -1,17 +1,10 @@
 "use client";
 
+import { PageWithLinks } from "@/lib/auth-helpers";
 import { Button, SidebarItem, Logo, UserProfile } from "../ui";
 
-interface Page {
-  id: string;
-  alias: string;
-  _count?: {
-    links: number;
-  };
-}
-
 interface SidebarProps {
-  pages: Page[];
+  pages: PageWithLinks[];
   currentPageAlias: string;
   isOpen: boolean;
   onClose: () => void;
@@ -43,7 +36,7 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={`
-                    fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-blue-900/40 to-purple-900/40 backdrop-blur-xl border-r border-white/10 z-50
+                    fixed top-0 left-0 h-full w-64 bg-linear-to-b from-blue-900/40 to-purple-900/40 backdrop-blur-xl border-r border-white/10 z-50
                     transform transition-transform duration-300 ease-in-out
                     ${isOpen ? "translate-x-0" : "-translate-x-full"}
                     lg:translate-x-0
@@ -85,7 +78,7 @@ export function Sidebar({
           )}
 
           {/* Pages List */}
-          <div className="flex-grow overflow-y-auto custom-scrollbar">
+          <div className="grow overflow-y-auto custom-scrollbar">
             <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
               Your Pages
             </div>
@@ -93,9 +86,9 @@ export function Sidebar({
               {pages.map((page) => (
                 <SidebarItem
                   key={page.id}
-                  label="Personal Links"
+                  label={page.title}
                   sublabel={`/${page.alias}`}
-                  badge={page._count?.links}
+                  badge={page.links.length}
                   isActive={page.alias === currentPageAlias}
                   href={`/dashboard/${page.alias}`}
                 />

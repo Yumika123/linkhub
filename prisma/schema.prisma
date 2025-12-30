@@ -62,6 +62,8 @@ model Page {
   ownerId     String?
   owner       User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   alias       String   @unique
+  title       String   @default("New Page")
+  description String?
   editToken   String?  @unique // Secret token for anonymous editing
   type        String   @default("text") // "text" | "image"
   isPublic    Boolean  @default(true)

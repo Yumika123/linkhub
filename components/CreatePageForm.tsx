@@ -1,24 +1,78 @@
 "use client";
 
 import { createPage } from "@/app/actions/pages";
+import { updatePage } from "@/app/actions/updateExitingPage";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button/button";
 import { Input } from "@/components/ui/Input/input";
+import { Page } from "@prisma/client";
 
 export function CreatePageForm({
   className,
   variant = "primary",
   isAuthenticated = false,
+  page,
+  onSuccess,
 }: {
   className?: string;
   variant?: "primary" | "secondary" | "action";
   isAuthenticated?: boolean;
+  page?: Page;
+  onSuccess?: () => void;
 }) {
-  const [state, formAction, isPending] = useActionState(createPage, null);
+  const isEditing = !!page;
+
+  async function handleSubmit(prevState: any, formData: FormData) {
+    if (isEditing && page) {
+      try {
+        await updatePage(page.id, {
+          title: formData.get("title") as string,
+          description: formData.get("description") as string,
+        });
+        if (onSuccess) onSuccess();
+        return { success: true };
+      } catch (error: any) {
+        return { error: error.message };
+      }
+    } else {
+      return createPage(prevState, formData);
+    }
+  }
+
+  const [state, formAction, isPending] = useActionState(handleSubmit, null);
 
   return (
     <form action={formAction} className={`space-y-4 ${className}`}>
       {isAuthenticated && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-2">
+              Page Title
+            </label>
+            <Input
+              type="text"
+              name="title"
+              placeholder="My Amazing Page"
+              defaultValue={page?.title ?? "New Page"}
+              required
+              variant="glass"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-2">
+              Description (Optional)
+            </label>
+            <textarea
+              name="description"
+              placeholder="A brief description of your page..."
+              defaultValue={page?.description ?? ""}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-white placeholder:text-white/20 transition-all min-h-[100px] resize-none"
+            />
+          </div>
+        </>
+      )}
+
+      {isAuthenticated && !isEditing && (
         <div>
           <label className="block text-sm font-medium text-white/80 mb-2">
             Page Alias (Optional)
@@ -43,10 +97,10 @@ export function CreatePageForm({
             Latin letters, digits, hyphens, and underscores only. Leave empty
             for random ID.
           </p>
-          {state?.error && (
-            <p className="text-sm text-red-400 mt-2">{state.error}</p>
-          )}
         </div>
+      )}
+      {state?.error && (
+        <p className="text-sm text-red-400 mt-2">{state.error}</p>
       )}
       <div className="flex gap-3">
         <Button
@@ -56,7 +110,11 @@ export function CreatePageForm({
           className="flex-1 gap-2"
         >
           {isPending
-            ? "Creating..."
+            ? isEditing
+              ? "Updating..."
+              : "Creating..."
+            : isEditing
+            ? "Update Page"
             : isAuthenticated
             ? "Create Page"
             : "Create Anonymous Page"}

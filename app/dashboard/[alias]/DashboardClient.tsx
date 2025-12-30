@@ -11,11 +11,8 @@ import { AddLinkForm } from "@/components/AddLinkForm";
 import { SignOutButton } from "@/components/SignOutButton";
 import { CreatePageModal } from "@/components/CreatePageModal";
 
-type PageWithLinks = PageModel & {
+export type PageWithLinks = PageModel & {
   links: LinkModel[];
-  _count?: {
-    links: number;
-  };
 };
 
 interface DashboardClientProps {
@@ -101,12 +98,11 @@ export function DashboardClient({
           </div>
 
           <DashboardHeader
-            pageTitle="Personal Links"
-            pageAlias={page.alias}
-            pageUrl={`linkhub.com/${page.alias}`}
+            page={page}
             view={view}
             onViewChange={setView}
             onAddLink={() => setShowAddForm(!showAddForm)}
+            onEditPage={() => setShowCreatePageModal(true)}
           />
 
           {showAddForm && <AddLinkForm pageId={page.id} />}
@@ -137,8 +133,11 @@ export function DashboardClient({
         </div>
       </div>
 
-      {showCreatePageModal && session?.user && (
-        <CreatePageModal onClose={() => setShowCreatePageModal(false)} />
+      {showCreatePageModal && (
+        <CreatePageModal
+          onClose={() => setShowCreatePageModal(false)}
+          page={page}
+        />
       )}
     </div>
   );
