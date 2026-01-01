@@ -5,14 +5,14 @@ import { LinkCard } from "@/components/LinkCard";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface PublicPageProps {
-  params: Promise<{ alias: string }>;
+  params: { alias: string };
 }
 
 export default async function PublicPage({ params }: PublicPageProps) {
-  const paramsData = await params;
-  const alias = decodeURIComponent(paramsData.alias);
+  const alias = decodeURIComponent(params.alias);
 
   const page = await prisma.page.findUnique({
     where: { alias },
