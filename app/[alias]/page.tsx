@@ -8,11 +8,11 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 interface PublicPageProps {
-  params: { alias: string };
+  params: Promise<{ alias: string }>;
 }
 
 export default async function PublicPage({ params }: PublicPageProps) {
-  const alias = decodeURIComponent(params.alias);
+  const { alias } = await params;
 
   const page = await prisma.page.findUnique({
     where: { alias },
