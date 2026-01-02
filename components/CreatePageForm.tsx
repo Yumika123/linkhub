@@ -2,10 +2,11 @@
 
 import { createPage } from "@/app/actions/pages";
 import { updatePage } from "@/app/actions/updateExitingPage";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { Button } from "@/components/ui/Button/button";
 import { Input } from "@/components/ui/Input/input";
 import { Page } from "@prisma/client";
+import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 
 export function CreatePageForm({
   className,
@@ -22,6 +23,8 @@ export function CreatePageForm({
 }) {
   const isEditing = !!page;
 
+  const { success, error } = useNotificationStore();
+
   async function handleSubmit(prevState: any, formData: FormData) {
     if (isEditing && page) {
       try {
@@ -30,12 +33,18 @@ export function CreatePageForm({
           description: formData.get("description") as string,
         });
         if (onSuccess) onSuccess();
-        return { success: true };
-      } catch (error: any) {
-        return { error: error.message };
+        success("Page updated successfully", "Success");
+      } catch (e: any) {
+        error(e.message, "Error");
       }
     } else {
-      return createPage(prevState, formData);
+      try {
+        await createPage(prevState, formData);
+        if (onSuccess) onSuccess();
+        success("Page created successfully", "Success");
+      } catch (e: any) {
+        error(e.message, "Error");
+      }
     }
   }
 
@@ -98,9 +107,6 @@ export function CreatePageForm({
             for random ID.
           </p>
         </div>
-      )}
-      {state?.error && (
-        <p className="text-sm text-red-400 mt-2">{state.error}</p>
       )}
       <div className="flex gap-3">
         <Button
