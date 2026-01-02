@@ -2,10 +2,11 @@
 
 import { createPage } from "@/app/actions/pages";
 import { updatePage } from "@/app/actions/updateExitingPage";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { Button } from "@/components/ui/Button/button";
 import { Input } from "@/components/ui/Input/input";
 import { Page } from "@prisma/client";
+import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 
 export function CreatePageForm({
   className,
@@ -40,6 +41,18 @@ export function CreatePageForm({
   }
 
   const [state, formAction, isPending] = useActionState(handleSubmit, null);
+  const { success, error } = useNotificationStore();
+
+  useEffect(() => {
+    if (state?.success) {
+      if (isEditing) {
+        success("Page updated successfully", "Success");
+      }
+      // For creation, it redirects, so we might not see this
+    } else if (state?.error) {
+      error(state.error, "Error");
+    }
+  }, [state, isEditing, success, error]);
 
   return (
     <form action={formAction} className={`space-y-4 ${className}`}>
