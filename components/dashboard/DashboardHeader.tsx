@@ -12,6 +12,7 @@ interface DashboardHeaderProps {
 }
 
 import { Button } from "../ui";
+import { useEffect, useState } from "react";
 
 export function DashboardHeader({
   page,
@@ -20,6 +21,12 @@ export function DashboardHeader({
   onAddLink,
   onEditPage,
 }: DashboardHeaderProps) {
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
   return (
     <div className="mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
@@ -32,7 +39,7 @@ export function DashboardHeader({
               "Manage and organize your links for this page. Share this collection with the world."}
           </p>
           <div className="mt-2 flex items-center gap-2 text-sm">
-            <span className="text-white/40">{`${location.origin}/${page.alias}`}</span>
+            <span className="text-white/40">{`${origin}/${page.alias}`}</span>
           </div>
         </div>
         {onAddLink && (
