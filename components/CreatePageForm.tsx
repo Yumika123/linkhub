@@ -10,13 +10,11 @@ import { useNotificationStore } from "@/components/ui/Notification/useNotificati
 
 export function CreatePageForm({
   className,
-  variant = "primary",
   isAuthenticated = false,
   page,
   onSuccess,
 }: {
   className?: string;
-  variant?: "primary" | "secondary" | "action";
   isAuthenticated?: boolean;
   page?: Page;
   onSuccess?: () => void;
@@ -39,10 +37,26 @@ export function CreatePageForm({
       }
     } else {
       try {
-        await createPage(prevState, formData);
+        const result = await createPage(prevState, formData);
+
+        if (result?.existingAlias) {
+          success("You already have a page created. Redirecting...", "Notice");
+          window.location.href = `/dashboard/${result.existingAlias}`;
+          return;
+        }
+
+        if (result?.error) {
+          error(result.error, "Error");
+          return;
+        }
+
         if (onSuccess) onSuccess();
         success("Page created successfully", "Success");
       } catch (e: any) {
+        // If it's a redirect, we don't want to catch it as an error
+        if (e.message === "NEXT_REDIRECT") {
+          throw e;
+        }
         error(e.message, "Error");
       }
     }

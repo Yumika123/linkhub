@@ -19,6 +19,20 @@ export async function createPage(prevState: any, formData: FormData) {
     if (!session?.user) {
         // Anonymous users always get a random UUID
         alias = crypto.randomUUID()
+        
+        // Check if anonymous user already has a page
+        const cookieStore = await cookies()
+        const existingEditToken = cookieStore.get('linkhub_edit_token')?.value
+        
+        if (existingEditToken) {
+            const existingPage = await prisma.page.findUnique({
+                where: { editToken: existingEditToken }
+            })
+            
+            if (existingPage) {
+                return { existingAlias: existingPage.alias }
+            }
+        }
     } else if (!alias || alias.trim() === "") {
         // Logged in users get UUID if they don't provide an alias
         alias = crypto.randomUUID()
