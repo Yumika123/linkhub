@@ -2,7 +2,7 @@
 
 import { createPage } from "@/app/actions/pages";
 import { updatePage } from "@/app/actions/updateExitingPage";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/Button/button";
 import { Input } from "@/components/ui/Input/input";
 import { Page } from "@prisma/client";
@@ -16,42 +16,38 @@ export function CreatePageForm({
 }: {
   className?: string;
   isAuthenticated?: boolean;
-  page?: Page;
+  page?: Pick<Page, "id" | "title" | "description" | "alias">;
   onSuccess?: () => void;
 }) {
-  const isEditing = !!page;
-
   const { success, error } = useNotificationStore();
 
-  async function handleSubmit(prevState: any, formData: FormData) {
-    if (isEditing && page) {
+  async function handleSubmit(_: any, formData: FormData) {
+    {
       try {
-        await updatePage(page.id, {
-          title: formData.get("title") as string,
-          description: formData.get("description") as string,
-        });
-        if (onSuccess) onSuccess();
-        success("Page updated successfully", "Success");
-      } catch (e: any) {
-        error(e.message, "Error");
-      }
-    } else {
-      try {
-        const result = await createPage(prevState, formData);
+        const title = formData.get("title") as string;
+        const description = formData.get("description") as string;
+        const alias = formData.get("alias") as string;
 
-        if (result?.existingAlias) {
-          success("You already have a page created. Redirecting...", "Notice");
-          window.location.href = `/dashboard/${result.existingAlias}`;
-          return;
-        }
+        const result = await createPage({
+          title,
+          description,
+          alias: alias || undefined,
+          links: [],
+        });
 
         if (result?.error) {
           error(result.error, "Error");
           return;
         }
 
+        if (result?.success && result?.alias) {
+          success("Page created successfully", "Success");
+          // Redirect happens via window.location for simplicity in this transition
+          window.location.href = `/dashboard/${result.alias}`;
+          return;
+        }
+
         if (onSuccess) onSuccess();
-        success("Page created successfully", "Success");
       } catch (e: any) {
         // If it's a redirect, we don't want to catch it as an error
         if (e.message === "NEXT_REDIRECT") {
@@ -95,7 +91,7 @@ export function CreatePageForm({
         </>
       )}
 
-      {isAuthenticated && !isEditing && (
+      {isAuthenticated && (
         <div>
           <label className="block text-sm font-medium text-white/80 mb-2">
             Page Alias (Optional)
@@ -130,11 +126,7 @@ export function CreatePageForm({
           className="flex-1 gap-2"
         >
           {isPending
-            ? isEditing
-              ? "Updating..."
-              : "Creating..."
-            : isEditing
-            ? "Update Page"
+            ? "Creating..."
             : isAuthenticated
             ? "Create Page"
             : "Create Anonymous Page"}

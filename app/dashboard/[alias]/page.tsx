@@ -1,45 +1,64 @@
-import { redirect } from "next/navigation"
-import { getUserPages, hasAccess, hasValidAnonymousPage } from "@/lib/auth-helpers"
-import { AddLinkForm } from "@/components/AddLinkForm"
-import { SignOutButton } from "@/components/SignOutButton"
-import { DeleteLinkButton } from "@/components/DeleteLinkButton"
-import { DashboardClient } from "./DashboardClient"
+import { redirect } from "next/navigation";
+import { getUserPages } from "@/lib/auth-helpers";
+import { DashboardClient } from "./DashboardClient";
 
 interface DashboardPageProps {
-    params: Promise<{ alias: string }>
+  params: Promise<{ alias: string }>;
 }
 
-export default async function DashboardAliasPage({ params }: DashboardPageProps) {
-    const { alias } = await params
-    const { session, userPages, editToken } = await getUserPages()
+export default async function DashboardAliasPage({
+  params,
+}: DashboardPageProps) {
+  const { alias } = await params;
+  const { session, userPages } = await getUserPages();
 
-    // Require either session or anon token
-    if (!hasAccess(session, editToken)) {
-        redirect("/")
+  let page = userPages.find((p) => p.alias === alias);
+  let isOrphan = false;
+  let readOnly = false;
+
+  if (!page) {
+    const { prisma } = await import("@/lib/prisma");
+    const foundPage = await prisma.page.findUnique({
+      where: { alias },
+      include: {
+        links: { orderBy: { order: "asc" } },
+        owner: true,
+      },
+    });
+
+    if (foundPage) {
+      page = foundPage;
+
+      if (!foundPage.ownerId) {
+        isOrphan = true;
+      }
+
+      if (
+        !session?.user?.email ||
+        foundPage.owner?.email !== session.user.email
+      ) {
+        readOnly = true;
+      }
     }
+  }
 
-    // Anonymous users MUST have a valid page
-    if (hasValidAnonymousPage(session, userPages)) {
-        redirect("/")
+  // If still no page, redirect
+  if (!page) {
+    if (userPages.length > 0) {
+      redirect(`/dashboard/${userPages[0].alias}`);
+    } else {
+      // If we are anonymous and page doesn't exist, go to home page
+      redirect("/");
     }
+  }
 
-    // Find the requested page by alias
-    const page = userPages.find((p) => p.alias === alias)
-
-    // If page not found or user doesn't have access, redirect
-    if (!page) {
-        if (userPages.length > 0) {
-            redirect(`/dashboard/${userPages[0].alias}`)
-        } else {
-            redirect("/dashboard")
-        }
-    }
-
-    return (
-        <DashboardClient
-            page={page}
-            userPages={userPages}
-            session={session}
-        />
-    )
+  return (
+    <DashboardClient
+      page={page}
+      userPages={userPages}
+      session={session}
+      readOnly={readOnly}
+      isOrphan={isOrphan}
+    />
+  );
 }

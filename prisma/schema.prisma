@@ -57,18 +57,18 @@ model VerificationToken {
 // Application Models
 
 model Page {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   ownerId     String?
-  owner       User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  alias       String   @unique
-  title       String   @default("New Page")
+  owner       User?   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  alias       String  @unique
+  title       String  @default("New Page")
   description String?
-  editToken   String?  @unique // Secret token for anonymous editing
-  type        String   @default("text") // "text" | "image"
-  isPublic    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  links       Link[]
+
+  type      String   @default("text") // "text" | "image"
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  links     Link[]
 }
 
 model Link {

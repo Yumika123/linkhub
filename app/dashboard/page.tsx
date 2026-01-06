@@ -1,10 +1,6 @@
 import { redirect } from "next/navigation";
-import {
-  getUserPages,
-  hasAccess,
-  hasValidAnonymousPage,
-} from "@/lib/auth-helpers";
-import { CreatePageForm } from "@/components/CreatePageForm";
+import { getUserPages, hasAccess } from "@/lib/auth-helpers";
+import { CreatePageForm } from "@/components/page/CreatePageForm";
 import { SignOutButton } from "@/components/SignOutButton";
 import { GradientLayout } from "@/components/layouts/GradientLayout";
 import {
@@ -17,15 +13,9 @@ import {
 } from "@/components/ui";
 
 export default async function DashboardPage() {
-  const { session, userPages, editToken } = await getUserPages();
+  const { session, userPages } = await getUserPages();
 
-  // Require either session or anon token
-  if (!hasAccess(session, editToken)) {
-    redirect("/");
-  }
-
-  // Anonymous users MUST have a valid page (editToken must match a page in DB)
-  if (hasValidAnonymousPage(session, userPages)) {
+  if (!hasAccess(session)) {
     redirect("/");
   }
 
@@ -46,10 +36,7 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CreatePageForm
-              isAuthenticated={!!session?.user}
-              variant="primary"
-            />
+            <CreatePageForm isAuthenticated={!!session?.user} />
           </CardContent>
           {session && (
             <CardFooter>

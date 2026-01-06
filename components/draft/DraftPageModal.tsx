@@ -1,16 +1,15 @@
-import { CreatePageForm } from "./page/CreatePageForm";
-import { EditPageForm } from "./page/EditPageForm";
-import { Button } from "./ui";
+import { DraftPageForm } from "./DraftPageForm";
+import { Button } from "../ui";
 import { Page } from "@prisma/client";
 
-export function PageModal({
+export function DraftPageModal({
   onClose,
   page,
-  isEditing,
+  setPage,
 }: {
   onClose?: () => void;
-  page?: Pick<Page, "id" | "title" | "description" | "alias">;
-  isEditing?: boolean;
+  page?: Pick<Page, "title" | "description" | "alias">;
+  setPage?: (page: Pick<Page, "title" | "description" | "alias">) => void;
 }) {
   return (
     <>
@@ -40,27 +39,11 @@ export function PageModal({
             </svg>
           </Button>
 
-          <h2 className="text-2xl font-bold mb-2 text-white">
-            {isEditing ? "Edit Page" : "Create New Page"}
-          </h2>
+          <h2 className="text-2xl font-bold mb-2 text-white">Edit Page</h2>
           <p className="text-white/60 text-sm mb-6">
-            {isEditing
-              ? "Update your page details below"
-              : "Choose a custom alias for your new page"}
+            Update your page details below
           </p>
-          {isEditing ? (
-            <EditPageForm
-              isAuthenticated={true}
-              page={page}
-              onSuccess={onClose}
-            />
-          ) : (
-            <CreatePageForm
-              isAuthenticated={true}
-              page={page}
-              onSuccess={onClose}
-            />
-          )}
+          <DraftPageForm page={page} setPage={setPage} onSuccess={onClose} />
         </div>
       </div>
     </>

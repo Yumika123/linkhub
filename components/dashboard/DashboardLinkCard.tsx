@@ -10,10 +10,17 @@ import { DeleteLinkButton } from "../DeleteLinkButton";
 
 interface DashboardLinkCardProps {
   link: LinkModel;
+  onEdit?: (id: string, formData: FormData) => void;
+  onDelete?: (id: string) => void;
   view: "list" | "grid";
 }
 
-export function DashboardLinkCard({ link, view }: DashboardLinkCardProps) {
+export function DashboardLinkCard({
+  link,
+  onEdit,
+  onDelete,
+  view,
+}: DashboardLinkCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const icon = getLinkIcon(link.url);
 
@@ -22,7 +29,12 @@ export function DashboardLinkCard({ link, view }: DashboardLinkCardProps) {
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
         <form
           action={async (formData) => {
-            await editLink(link.id, formData);
+            if (onEdit) {
+              onEdit(link.id, formData);
+            } else {
+              await editLink(link.id, formData);
+            }
+
             setIsEditing(false);
           }}
           className="flex flex-col gap-3"
@@ -74,7 +86,7 @@ export function DashboardLinkCard({ link, view }: DashboardLinkCardProps) {
             {link.title}
           </h3>
 
-          <p className="text-white/50 text-sm mb-4 line-clamp-1 flex-grow">
+          <p className="text-white/50 text-sm mb-4 line-clamp-1 grow">
             {link.url.replace(/^https?:\/\//, "")}
           </p>
 
@@ -100,7 +112,6 @@ export function DashboardLinkCard({ link, view }: DashboardLinkCardProps) {
           </a>
         </div>
 
-        {/* Edit/Delete buttons on hover */}
         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
           <Button
             onClick={() => setIsEditing(true)}
@@ -110,7 +121,7 @@ export function DashboardLinkCard({ link, view }: DashboardLinkCardProps) {
           >
             Edit
           </Button>
-          <DeleteLinkButton linkId={link.id} />
+          <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
         </div>
       </div>
     );
@@ -133,7 +144,7 @@ export function DashboardLinkCard({ link, view }: DashboardLinkCardProps) {
           </p>
           <a
             href={link.url}
-            target={link.target}
+            target={link?.target ?? "_blank"}
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-blue-300 hover:text-blue-200 text-sm font-medium transition-colors"
           >
@@ -162,7 +173,7 @@ export function DashboardLinkCard({ link, view }: DashboardLinkCardProps) {
           >
             Edit
           </Button>
-          <DeleteLinkButton linkId={link.id} />
+          <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
         </div>
       </div>
     </div>

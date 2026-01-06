@@ -1,133 +1,111 @@
-"use server"
+"use server";
 
-import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
-import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
-import crypto from "crypto"
-import { Prisma } from "@prisma/client"
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import crypto from "crypto";
 
-import { cookies } from "next/headers"
+export type CreatePageData = {
+  alias?: string;
+  title?: string;
+  description?: string | null;
+  links?: { title: string; url: string; image?: string }[];
+};
 
-export async function createPage(prevState: any, formData: FormData) {
-    const session = await auth()
+export async function createPage(data: CreatePageData) {
+  const session = await auth();
 
-    // Custom alias is only allowed for logged in users
-    // For anonymous users, we always generate a UUID alias
-    let alias = formData.get("alias") as string | null
+  // 1. Alias Generation/Validation
+  let alias = data.alias;
 
-    if (!session?.user) {
-        // Anonymous users always get a random UUID
-        alias = crypto.randomUUID()
-        
-        // Check if anonymous user already has a page
-        const cookieStore = await cookies()
-        const existingEditToken = cookieStore.get('linkhub_edit_token')?.value
-        
-        if (existingEditToken) {
-            const existingPage = await prisma.page.findUnique({
-                where: { editToken: existingEditToken }
-            })
-            
-            if (existingPage) {
-                return { existingAlias: existingPage.alias }
-            }
-        }
-    } else if (!alias || alias.trim() === "") {
-        // Logged in users get UUID if they don't provide an alias
-        alias = crypto.randomUUID()
+  if (!session?.user) {
+    // Anonymous: always UUID
+    alias = crypto.randomUUID();
+  } else {
+    // Logged in: use provided or fallback to UUID
+    if (!alias || alias.trim() === "") {
+      alias = crypto.randomUUID();
     }
+  }
 
-    // TODO: Handle error
-    if (!alias) {
-        return { error: "Alias could not be generated." }
-    }
+  if (!alias) return { error: "Alias generation failed" };
 
-    // Validation for custom alias
-    const isUserProvidedAlias = session?.user && formData.get("alias") !== null && formData.get("alias") === alias;
-    if (isUserProvidedAlias) {
-        if (alias.length < 3) {
-            return { error: "Alias must be at least 3 characters" }
-        }
-        if (alias.length > 50) {
-            return { error: "Alias must be at most 50 characters" }
-        }
-        // Only allow Latin letters, digits, hyphens, and underscores
-        const aliasRegex = /^[a-zA-Z0-9_-]+$/
-        if (!aliasRegex.test(alias)) {
-            return { error: "Alias can only contain Latin letters, digits, hyphens, and underscores" }
-        }
-    }
+  // Validate custom alias for logged in users
+  if (session?.user && data.alias && data.alias === alias) {
+    if (alias.length < 3)
+      return { error: "Alias must be at least 3 characters" };
+    if (alias.length > 50)
+      return { error: "Alias must be at most 50 characters" };
+    const aliasRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!aliasRegex.test(alias)) return { error: "Invalid alias format" };
 
-    // Check uniqueness
-    const existing = await prisma.page.findUnique({ where: { alias } })
-    if (existing) {
-        return { error: "Alias already taken" }
-    }
+    const existing = await prisma.page.findUnique({ where: { alias } });
+    if (existing) return { error: "Alias already taken" };
+  }
 
-    let ownerId: string | undefined = undefined
-    if (session?.user?.email) {
-        const user = await prisma.user.findUnique({ where: { email: session.user.email } })
-        if (user) ownerId = user.id
-    }
+  // 2. Owner Resolution
+  let ownerId: string | null = null;
+  if (session?.user?.email) {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+    if (user) ownerId = user.id;
+  }
 
-    // Generate secret token for everyone, though mostly used for anon
-    // ???
-    const editToken = crypto.randomUUID()
-
-    const pageData: Prisma.PageUncheckedCreateInput = {
+  // 3. Create Page & Links Transaction
+  // We use a transaction or nested create
+  try {
+    const newPage = await prisma.page.create({
+      data: {
         alias,
+        title: data.title || (ownerId ? "New Page" : "Anonymous Page"),
+        description: data.description || null,
+        ownerId,
         isPublic: true,
         type: "list",
-        ownerId: ownerId ?? null,
-        // ???
-        editToken
-    }
+        links: {
+          create:
+            data.links?.map((link, idx) => ({
+              title: link.title,
+              url: link.url,
+              image: link.image,
+              order: idx,
+            })) || [],
+        },
+      },
+    });
 
-    await prisma.page.create({
-        data: pageData
-    })
-
-    if (ownerId) {
-        revalidatePath("/dashboard")
-        redirect(`/dashboard/${alias}`)
-    } else {
-        // Anonymous user: Set cookie to allow editing
-        const cookieStore = await cookies()
-        cookieStore.set('linkhub_edit_token', editToken, {
-            secure: process.env.NODE_ENV === 'production',
-            httpOnly: true,
-            path: '/',
-            maxAge: 60 * 60 * 24 * 30 // 30 days
-        })
-
-        // Redirect to dashboard with alias
-        redirect(`/dashboard/${alias}`)
-    }
+    revalidatePath("/dashboard");
+    return { success: true, alias: newPage.alias };
+  } catch (error) {
+    console.error("Failed to create page:", error);
+    return { error: "Failed to create page" };
+  }
 }
 
 export async function deletePage(pageId: string) {
-    const session = await auth()
-    const cookieStore = await cookies()
-    const editToken = cookieStore.get('linkhub_edit_token')?.value
+  const session = await auth();
 
-    const page = await prisma.page.findUnique({
-        where: { id: pageId },
-        include: { owner: true }
-    })
+  if (!session?.user?.email) {
+    throw new Error("Unauthorized");
+  }
 
-    if (!page) throw new Error("Page not found")
+  const page = await prisma.page.findUnique({
+    where: { id: pageId },
+    include: { owner: true },
+  });
 
-    const isOwner = session?.user?.email && page.owner?.email === session.user.email
-    const isAnonEditor = editToken && page.editToken === editToken
+  if (!page) throw new Error("Page not found");
 
-    if (!isOwner && !isAnonEditor) {
-        throw new Error("Unauthorized")
-    }
+  const isOwner = page.owner?.email === session.user.email;
 
-    await prisma.page.delete({
-        where: { id: pageId }
-    })
+  if (!isOwner) {
+    throw new Error("Unauthorized");
+  }
 
-    revalidatePath("/dashboard")
+  await prisma.page.delete({
+    where: { id: pageId },
+  });
+
+  revalidatePath("/dashboard");
 }
