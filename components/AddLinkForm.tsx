@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createLink } from "@/app/actions/links";
 import { Button } from "./ui";
+import { Input } from "@/components/ui/Input/input";
 
 interface AddLinkFormProps {
   pageId?: string;
@@ -20,10 +21,35 @@ export function AddLinkForm({ pageId, onAdd, onClose }: AddLinkFormProps) {
 
   if (!isOpen) return null;
 
+  // TODO: Replace with Modal
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-gray-100">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 text-center">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-linear-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-8 relative animate-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Button
+          onClick={handleClose}
+          variant="ghost"
+          buttonSize="icon"
+          className="absolute top-6 right-6"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </Button>
+
+        <h2 className="text-2xl font-bold mb-6 text-white text-center">
           Add New Link
         </h2>
         <form
@@ -43,27 +69,27 @@ export function AddLinkForm({ pageId, onAdd, onClose }: AddLinkFormProps) {
         >
           {pageId && <input type="hidden" name="pageId" value={pageId} />}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white/80 mb-2">
               Title
             </label>
-            <input
+            <Input
               type="text"
               name="title"
               placeholder="My Awesome Link"
-              className="w-full rounded-xl border-gray-200 shadow-sm focus:border-black focus:ring-black px-4 py-3 border transition-all"
               required
+              variant="glass"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white/80 mb-2">
               URL
             </label>
-            <input
+            <Input
               type="url"
               name="url"
               placeholder="https://example.com"
-              className="w-full rounded-xl border-gray-200 shadow-sm focus:border-black focus:ring-black px-4 py-3 border transition-all"
               required
+              variant="glass"
             />
           </div>
 
@@ -72,11 +98,11 @@ export function AddLinkForm({ pageId, onAdd, onClose }: AddLinkFormProps) {
               type="button"
               onClick={handleClose}
               variant="ghost"
-              className="text-gray-500 hover:text-gray-700"
+              className="text-white/60 hover:text-white"
             >
               Cancel
             </Button>
-            <Button type="submit" variant="black" className="flex-1">
+            <Button type="submit" variant="gradient" className="flex-1">
               Create Link
             </Button>
           </div>
