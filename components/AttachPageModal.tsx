@@ -42,6 +42,7 @@ export function AttachPageModal({
       title="Claim This Page"
       description={`This appears to be an anonymous page "${page.title}" (${page.alias}). Would you like to claim it and attach it to your account?`}
       showCloseButton={true}
+      preventClose={loading}
     >
       <div className="flex gap-3 mt-6">
         <Button

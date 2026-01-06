@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../Button/button";
 import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
 const ModalVariants = cva("", {
   variants: {
@@ -22,6 +23,8 @@ interface ModalProps {
   children: React.ReactNode;
   showCloseButton?: boolean;
   variant?: "glass";
+  className?: string;
+  preventClose?: boolean;
 }
 
 export function Modal({
@@ -32,6 +35,8 @@ export function Modal({
   description,
   children,
   showCloseButton = true,
+  className,
+  preventClose = false,
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -49,16 +54,24 @@ export function Modal({
 
   if (!mounted || !isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (preventClose) return;
+    onClose?.();
+  };
+
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in"
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       <div
-        className={ModalVariants({ variant: variant ?? "glass" })}
+        className={cn(
+          ModalVariants({ variant: variant ?? "glass" }),
+          className
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        {showCloseButton && onClose && (
+        {showCloseButton && onClose && !preventClose && (
           <Button
             onClick={onClose}
             variant="ghost"

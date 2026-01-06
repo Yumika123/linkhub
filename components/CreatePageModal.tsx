@@ -1,6 +1,6 @@
 import { CreatePageForm } from "./page/CreatePageForm";
 import { EditPageForm } from "./page/EditPageForm";
-import { Button } from "./ui";
+import { Modal } from "./ui/Modal/Modal";
 import { Page } from "@prisma/client";
 
 export function PageModal({
@@ -13,56 +13,25 @@ export function PageModal({
   isEditing?: boolean;
 }) {
   return (
-    <>
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in"
-        onClick={onClose}
-      >
-        <div
-          className="bg-linear-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-8 relative animate-in zoom-in-95"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            buttonSize="icon"
-            className="absolute top-6 right-6"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </Button>
-
-          <h2 className="text-2xl font-bold mb-2 text-white">
-            {isEditing ? "Edit Page" : "Create New Page"}
-          </h2>
-          <p className="text-white/60 text-sm mb-6">
-            {isEditing
-              ? "Update your page details below"
-              : "Choose a custom alias for your new page"}
-          </p>
-          {isEditing ? (
-            <EditPageForm
-              isAuthenticated={true}
-              page={page}
-              onSuccess={onClose}
-            />
-          ) : (
-            <CreatePageForm
-              isAuthenticated={true}
-              page={page}
-              onSuccess={onClose}
-            />
-          )}
-        </div>
-      </div>
-    </>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={isEditing ? "Edit Page" : "Create New Page"}
+      description={
+        isEditing
+          ? "Update your page details below"
+          : "Choose a custom alias for your new page"
+      }
+    >
+      {isEditing ? (
+        <EditPageForm isAuthenticated={true} page={page} onSuccess={onClose} />
+      ) : (
+        <CreatePageForm
+          isAuthenticated={true}
+          page={page}
+          onSuccess={onClose}
+        />
+      )}
+    </Modal>
   );
 }
