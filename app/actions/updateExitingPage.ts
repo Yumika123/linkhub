@@ -1,34 +1,41 @@
-"use server"
+"use server";
 
-import { auth } from "@/auth"
-import { prisma } from "@/lib/prisma"
-import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
-export async function updatePage(pageId: string, data: { type?: string, isPublic?: boolean, title?: string, description?: string }) {
-    const session = await auth()
-    const cookieStore = await cookies()
-    const editToken = cookieStore.get('linkhub_edit_token')?.value
+export async function updatePage(
+  pageId: string,
+  data: {
+    type?: string;
+    isPublic?: boolean;
+    title?: string;
+    description?: string;
+  }
+) {
+  const session = await auth();
+  const cookieStore = await cookies();
 
-    const page = await prisma.page.findUnique({
-        where: { id: pageId },
-        include: { owner: true }
-    })
+  const page = await prisma.page.findUnique({
+    where: { id: pageId },
+    include: { owner: true },
+  });
 
-    if (!page) throw new Error("Page not found")
+  if (!page) throw new Error("Page not found");
 
-    const isOwner = session?.user?.email && page.owner?.email === session.user.email
-    const isAnonEditor = editToken && page.editToken === editToken
+  const isOwner =
+    session?.user?.email && page.owner?.email === session.user.email;
 
-    if (!isOwner && !isAnonEditor) {
-        throw new Error("Unauthorized")
-    }
+  if (!isOwner) {
+    throw new Error("Unauthorized");
+  }
 
-    await prisma.page.update({
-        where: { id: pageId },
-        data
-    })
+  await prisma.page.update({
+    where: { id: pageId },
+    data,
+  });
 
-    revalidatePath("/dashboard")
-    revalidatePath(`/${page.alias}`)
+  revalidatePath("/dashboard");
+  revalidatePath(`/${page.alias}`);
 }
