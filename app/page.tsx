@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { GradientBackground } from "@/components/GradientBackground";
+
 import { Button } from "@/components/ui";
 
 export default async function Home() {
@@ -12,8 +12,6 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white flex flex-col items-center justify-center p-8 text-center">
-      <GradientBackground />
-
       <main className="relative z-10 max-w-2xl space-y-8 animate-float">
         <div className="space-y-4">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl drop-shadow-lg">

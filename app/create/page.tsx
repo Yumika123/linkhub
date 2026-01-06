@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GradientBackground } from "@/components/GradientBackground";
+
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardLinkCard } from "@/components/dashboard/DashboardLinkCard";
 import { AddLinkForm } from "@/components/AddLinkForm";
@@ -89,8 +89,6 @@ export default function CreatePage() {
 
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
-      <GradientBackground />
-
       <div className="container mx-auto px-4 py-8 max-w-5xl relative z-10">
         <div className="flex justify-between items-center mb-8 bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10">
           <div>
