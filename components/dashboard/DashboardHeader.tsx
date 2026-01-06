@@ -9,6 +9,7 @@ interface DashboardHeaderProps {
   onViewChange: (view: "list" | "grid") => void;
   onAddLink?: () => void;
   onEditPage?: () => void;
+  onDeletePage?: () => void;
   readOnly?: boolean;
 }
 
@@ -21,6 +22,7 @@ export function DashboardHeader({
   onViewChange,
   onAddLink,
   onEditPage,
+  onDeletePage,
   readOnly,
 }: DashboardHeaderProps) {
   const [origin, setOrigin] = useState("");
@@ -67,6 +69,17 @@ export function DashboardHeader({
                 rounded="full"
               >
                 Edit Page
+              </Button>
+            )}
+            {onDeletePage && (
+              <Button
+                onClick={onDeletePage}
+                variant="danger"
+                buttonSize="icon"
+                className="gap-2 px-6"
+                rounded="full"
+              >
+                Delete Page
               </Button>
             )}
           </div>

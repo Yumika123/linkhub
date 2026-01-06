@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Link as LinkModel, Page as PageModel } from "@prisma/client";
 import { Session } from "next-auth";
-import { GradientBackground } from "@/components/GradientBackground";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardLinkCard } from "@/components/dashboard/DashboardLinkCard";
@@ -16,6 +15,10 @@ export type PageWithLinks = PageModel & {
 };
 
 import { AttachPageModal } from "@/components/AttachPageModal";
+import { deletePage } from "@/app/actions/pages";
+import { useNotificationStore } from "@/components/ui/Notification/useNotification";
+import { DeletePageModal } from "@/components/DeletePageModal";
+import { useRouter } from "next/navigation";
 
 interface DashboardClientProps {
   page: PageWithLinks;
@@ -35,12 +38,15 @@ export function DashboardClient({
   readOnly,
   isOrphan,
 }: DashboardClientProps) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [view, setView] = useState<"list" | "grid">("list");
   const [showAddForm, setShowAddForm] = useState(false);
   const [showCreatePageModal, setShowCreatePageModal] = useState(false);
   const [showEditPageModal, setShowEditPageModal] = useState(false);
   const [showAttachModal, setShowAttachModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // If we are logged in and view an orphan page, prompt to claim
@@ -49,10 +55,45 @@ export function DashboardClient({
     }
   }, [session, isOrphan]);
 
+  const { success, error } = useNotificationStore();
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+
+    // 1. Optimistic Redirect
+    const remainingPages = userPages.filter((p) => p.id !== page.id);
+    let targetUrl = "/"; // Default to home/landing
+
+    if (remainingPages.length > 0) {
+      // Go to the first available page
+      targetUrl = `/dashboard/${remainingPages[0].alias}`;
+    } else if (session?.user) {
+      // If logged in but no pages left, maybe go to create or dashboard root (which handles redirection)
+      // For now, home is safe
+      targetUrl = "/";
+    }
+
+    // Navigate immediately
+    router.push(targetUrl);
+
+    // 2. Perform Deletion in Background
+    try {
+      await deletePage(page.id);
+      success("Page deleted successfully", "Success");
+      // Since we already navigated, we don't need to do anything else.
+      // The old page component is likely unmounting.
+    } catch (e: any) {
+      // In the rare case navigation didn't happen fast enough or something failed drastically
+      // and we are still here:
+      console.error("Deletion failed", e);
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      error(e.message || "Failed to delete page", "Error");
+    }
+  };
+
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
-      <GradientBackground />
-
       {!readOnly && (
         <Sidebar
           pages={userPages}
@@ -143,6 +184,9 @@ export function DashboardClient({
             onViewChange={setView}
             onAddLink={() => setShowAddForm(!showAddForm)}
             onEditPage={() => setShowEditPageModal(true)}
+            onDeletePage={
+              session?.user ? () => setShowDeleteModal(true) : undefined
+            }
             readOnly={readOnly}
           />
 
@@ -193,6 +237,15 @@ export function DashboardClient({
           onClose={() => setShowEditPageModal(false)}
           page={page}
           isEditing
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeletePageModal
+          isOpen={showDeleteModal}
+          isDeleting={isDeleting}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
         />
       )}
     </div>
