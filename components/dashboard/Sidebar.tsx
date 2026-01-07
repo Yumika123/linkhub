@@ -2,6 +2,25 @@
 
 import { PageWithLinks } from "@/lib/auth-helpers";
 import { Button, SidebarItem, Logo, UserProfile } from "../ui";
+import { SortableItem } from "@/components/dashboard/SortableItem";
+import { reorderPages } from "@/app/actions/pages";
+import { useEffect, useRef, useState } from "react";
+import { Page } from "@prisma/client";
+import {
+  useSensors,
+  useSensor,
+  PointerSensor,
+  KeyboardSensor,
+  DragEndEvent,
+  DndContext,
+  closestCenter,
+} from "@dnd-kit/core";
+import {
+  sortableKeyboardCoordinates,
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface SidebarProps {
   pages: PageWithLinks[];
@@ -23,6 +42,73 @@ export function Sidebar({
   userInfo,
   onCreatePage,
 }: SidebarProps) {
+  // Local state for pages to support optimistic updates
+  const [reorderedPages, setReorderedPages] = useState<Page[]>(pages);
+
+  useEffect(() => {
+    setReorderedPages(pages);
+  }, [pages]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts - prevents accidental drags on click
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Debounce timer ref for batching multiple reorders
+  const reorderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingReorderRef = useRef<{ id: string; order: number }[] | null>(
+    null
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      // Store previous state for potential rollback
+      const previousPages = reorderedPages;
+
+      setReorderedPages((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        const newItems = arrayMove(items, oldIndex, newIndex);
+
+        const updates = newItems.map((item, index) => ({
+          id: item.id,
+          order: index,
+        }));
+
+        if (reorderTimeoutRef.current) {
+          clearTimeout(reorderTimeoutRef.current);
+        }
+
+        pendingReorderRef.current = updates;
+
+        const timeoutId = setTimeout(() => {
+          const updatesToSend = pendingReorderRef.current;
+          if (updatesToSend) {
+            reorderPages(updatesToSend).catch((err) => {
+              console.error("Failed to reorder pages:", err);
+              // error("Failed to save new order");
+              setReorderedPages(previousPages);
+            });
+            pendingReorderRef.current = null;
+          }
+        }, 500);
+
+        reorderTimeoutRef.current = timeoutId;
+
+        return newItems;
+      });
+    }
+  };
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -82,18 +168,31 @@ export function Sidebar({
             <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
               Your Pages
             </div>
-            <div className="space-y-2">
-              {pages.map((page) => (
-                <SidebarItem
-                  key={page.id}
-                  label={page.title}
-                  sublabel={`/${page.alias}`}
-                  badge={page.links.length}
-                  isActive={page.alias === currentPageAlias}
-                  href={`/dashboard/${page.alias}`}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={pages.map((page) => page.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {pages.map((page) => (
+                    <SortableItem key={page.id} id={page.id}>
+                      <SidebarItem
+                        key={page.id}
+                        label={page.title}
+                        sublabel={`/${page.alias}`}
+                        badge={page.links.length}
+                        isActive={page.alias === currentPageAlias}
+                        href={`/dashboard/${page.alias}`}
+                      />
+                    </SortableItem>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
 
           {/* User Profile */}
