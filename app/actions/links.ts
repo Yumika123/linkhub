@@ -68,35 +68,3 @@ export async function deleteLink(linkId: string) {
   revalidatePath("/dashboard");
   revalidatePath(`/${link.page.alias}`);
 }
-
-export async function reorderLinks(items: { id: string; order: number }[]) {
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    throw new Error("Unauthorized");
-  }
-
-  if (items.length === 0) return;
-
-  const firstLink = await prisma.link.findUnique({
-    where: { id: items[0].id },
-    include: { page: { include: { owner: true } } },
-  });
-
-  if (!firstLink) throw new Error("Link not found");
-
-  const isOwner = firstLink.page.owner?.email === session.user.email;
-
-  if (!isOwner) {
-    throw new Error("Unauthorized");
-  }
-
-  await prisma.$transaction(
-    items.map((item) =>
-      prisma.link.update({
-        where: { id: item.id },
-        data: { order: item.order },
-      })
-    )
-  );
-}

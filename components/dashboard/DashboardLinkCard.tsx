@@ -76,18 +76,7 @@ export function DashboardLinkCard({
 
   if (view === "grid") {
     return (
-      <div className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 cursor-grab active:cursor-grabbing">
-        <div className="absolute top-4 left-4 text-white/30 group-hover:text-white/50 transition-colors">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="9" cy="5" r="1.5" />
-            <circle cx="15" cy="5" r="1.5" />
-            <circle cx="9" cy="12" r="1.5" />
-            <circle cx="15" cy="12" r="1.5" />
-            <circle cx="9" cy="19" r="1.5" />
-            <circle cx="15" cy="19" r="1.5" />
-          </svg>
-        </div>
-
+      <div className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300">
         <div className="flex flex-col h-full">
           <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center text-3xl mb-4">
             {icon}
@@ -106,7 +95,6 @@ export function DashboardLinkCard({
             target={link.target}
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-blue-300 hover:text-blue-200 text-sm font-medium transition-colors mt-auto"
-            onClick={(e) => e.stopPropagation()}
           >
             Visit Link
             <svg
@@ -141,19 +129,8 @@ export function DashboardLinkCard({
 
   // List view
   return (
-    <div className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 cursor-grab active:cursor-grabbing">
+    <div className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300">
       <div className="flex items-start gap-4">
-        <div className="text-white/30 group-hover:text-white/50 transition-colors shrink-0 pt-3">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="9" cy="5" r="1.5" />
-            <circle cx="15" cy="5" r="1.5" />
-            <circle cx="9" cy="12" r="1.5" />
-            <circle cx="15" cy="12" r="1.5" />
-            <circle cx="9" cy="19" r="1.5" />
-            <circle cx="15" cy="19" r="1.5" />
-          </svg>
-        </div>
-
         <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center text-3xl shrink-0">
           {icon}
         </div>
@@ -170,7 +147,6 @@ export function DashboardLinkCard({
             target={link?.target ?? "_blank"}
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-blue-300 hover:text-blue-200 text-sm font-medium transition-colors"
-            onClick={(e) => e.stopPropagation()}
           >
             Visit Link
             <svg
