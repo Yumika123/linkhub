@@ -16,7 +16,7 @@ export class RateLimitError extends Error {
 export const RATE_LIMITS = {
   // Anonymous page creation: 20 pages per hour
   ANON_CREATE_PAGE: {
-    uniqueTokenPerInterval: 5,
+    uniqueTokenPerInterval: 20,
     interval: 60 * 60 * 1000,
   },
 
