@@ -3,9 +3,15 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
+import { RATE_LIMITS } from "@/lib/rate-limit-shared";
 
 export async function createLink(formData: FormData) {
   const session = await auth();
+
+  const identifier = await getClientIdentifier();
+
+  await rateLimit(identifier, RATE_LIMITS.AUTH_CREATE_LINK);
 
   const title = formData.get("title") as string;
   const url = formData.get("url") as string;

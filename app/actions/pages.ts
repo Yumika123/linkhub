@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
+import { RATE_LIMITS, RateLimitError } from "@/lib/rate-limit-shared";
 
 export type CreatePageData = {
   alias?: string;
@@ -14,6 +16,23 @@ export type CreatePageData = {
 
 export async function createPage(data: CreatePageData) {
   const session = await auth();
+  const identifier = await getClientIdentifier();
+  const limitConfig = session?.user
+    ? RATE_LIMITS.AUTH_CREATE_PAGE
+    : RATE_LIMITS.ANON_CREATE_PAGE;
+
+  try {
+    await rateLimit(identifier, limitConfig);
+  } catch (e) {
+    if (e instanceof RateLimitError) {
+      return {
+        error: e.message,
+        isRateLimit: true,
+        retryAfter: e.retryAfter,
+      };
+    }
+    throw e;
+  }
 
   // 1. Alias Generation/Validation
   let alias = data.alias;

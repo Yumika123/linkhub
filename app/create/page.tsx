@@ -8,6 +8,7 @@ import { DashboardLinkCard } from "@/components/dashboard/DashboardLinkCard";
 import { AddLinkForm } from "@/components/AddLinkForm";
 import { Button } from "@/components/ui";
 import { createPage } from "@/app/actions/pages";
+import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 
 type ClientPage = Pick<Page, "title" | "description" | "alias">;
 
@@ -27,9 +28,11 @@ type ClientLink = {
 import { Page } from "@prisma/client";
 import { DraftPageModal } from "@/components/draft/DraftPageModal";
 import { generateId } from "@/lib/generate-uuid";
+import { RateLimitError } from "@/lib/rate-limit-shared";
 
 export default function CreatePage() {
   const router = useRouter();
+  const { error } = useNotificationStore();
 
   const [page, setPage] = useState<ClientPage>({
     title: "My Anonymous Page",
@@ -76,12 +79,16 @@ export default function CreatePage() {
 
       if (result.success && result.alias) {
         router.push(`/dashboard/${result.alias}`);
+      } else if (result.isRateLimit) {
+        error(
+          `Rate limit exceeded. Please try again in ${result.retryAfter} seconds.`
+        );
       } else {
-        alert("Failed to publish: " + (result.error || "Unknown error"));
+        error("Failed to publish: " + (result.error || "Unknown error"));
       }
     } catch (e) {
-      alert("Error publishing page");
       console.error(e);
+      error("Error publishing page");
     } finally {
       setIsPublishing(false);
     }
