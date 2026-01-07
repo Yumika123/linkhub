@@ -26,7 +26,7 @@ import {
   verticalListSortingStrategy,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableLink } from "@/components/dashboard/SortableLink";
+import { SortableItem } from "@/components/dashboard/SortableItem";
 import { reorderLinks } from "@/app/actions/links";
 
 export type PageWithLinks = PageModel & {
@@ -308,9 +308,9 @@ export function DashboardClient({
                   }
                 >
                   {links.map((link) => (
-                    <SortableLink key={link.id} id={link.id}>
+                    <SortableItem key={link.id} id={link.id}>
                       <DashboardLinkCard link={link} view={view} />
-                    </SortableLink>
+                    </SortableItem>
                   ))}
                 </div>
               </SortableContext>

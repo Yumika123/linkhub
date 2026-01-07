@@ -9,7 +9,7 @@ interface SortableLinkProps {
   children: ReactNode;
 }
 
-export function SortableLink({ id, children }: SortableLinkProps) {
+export function SortableItem({ id, children }: SortableLinkProps) {
   const {
     attributes,
     listeners,

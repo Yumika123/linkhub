@@ -63,6 +63,7 @@ model Page {
   alias       String  @unique
   title       String  @default("New Page")
   description String?
+  order       Int     @default(0)
 
   type      String   @default("text") // "text" | "image"
   isPublic  Boolean  @default(true)
