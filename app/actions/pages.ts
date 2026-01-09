@@ -73,6 +73,17 @@ export async function createPage(data: CreatePageData) {
 
   // 3. Create Page & Links Transaction
   // We use a transaction or nested create
+  let order = 0;
+  if (ownerId) {
+    // For authenticated users, get the max order of their pages
+    const maxOrderPage = await prisma.page.findFirst({
+      where: { ownerId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    order = (maxOrderPage?.order ?? -1) + 1;
+  }
+
   try {
     const newPage = await prisma.page.create({
       data: {
@@ -91,6 +102,7 @@ export async function createPage(data: CreatePageData) {
               order: idx,
             })) || [],
         },
+        order,
       },
     });
 
@@ -127,4 +139,36 @@ export async function deletePage(pageId: string) {
   });
 
   revalidatePath("/dashboard");
+}
+
+export async function reorderPages(items: { id: string; order: number }[]) {
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    throw new Error("Unauthorized");
+  }
+
+  if (items.length === 0) return;
+
+  const firstPage = await prisma.page.findUnique({
+    where: { id: items[0].id },
+    include: { owner: true },
+  });
+
+  if (!firstPage) throw new Error("Page not found");
+
+  const isOwner = firstPage.owner?.email === session.user.email;
+
+  if (!isOwner) {
+    throw new Error("Unauthorized");
+  }
+
+  await prisma.$transaction(
+    items.map((item) =>
+      prisma.page.update({
+        where: { id: item.id },
+        data: { order: item.order },
+      })
+    )
+  );
 }

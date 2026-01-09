@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link as LinkModel, Page as PageModel } from "@prisma/client";
 import { Session } from "next-auth";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -9,6 +9,24 @@ import { DashboardLinkCard } from "@/components/dashboard/DashboardLinkCard";
 import { AddLinkForm } from "@/components/AddLinkForm";
 import { SignOutButton } from "@/components/SignOutButton";
 import { PageModal } from "@/components/CreatePageModal";
+
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableItem } from "@/components/dashboard/SortableItem";
 
 export type PageWithLinks = PageModel & {
   links: LinkModel[];
@@ -19,6 +37,8 @@ import { deletePage } from "@/app/actions/pages";
 import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 import { DeletePageModal } from "@/components/DeletePageModal";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
+import { reorderLinks } from "@/app/actions/links";
 
 interface DashboardClientProps {
   page: PageWithLinks;
@@ -27,9 +47,6 @@ interface DashboardClientProps {
   readOnly?: boolean;
   isOrphan?: boolean;
 }
-
-import { Button } from "@/components/ui";
-import { useEffect } from "react";
 
 export function DashboardClient({
   page,
@@ -48,6 +65,13 @@ export function DashboardClient({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Local state for links to support optimistic updates
+  const [links, setLinks] = useState<LinkModel[]>(page.links);
+
+  useEffect(() => {
+    setLinks(page.links);
+  }, [page.links]);
+
   useEffect(() => {
     // If we are logged in and view an orphan page, prompt to claim
     if (session?.user && isOrphan) {
@@ -56,6 +80,66 @@ export function DashboardClient({
   }, [session, isOrphan]);
 
   const { success, error } = useNotificationStore();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts - prevents accidental drags on click
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Debounce timer ref for batching multiple reorders
+  const reorderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingReorderRef = useRef<{ id: string; order: number }[] | null>(
+    null
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      // Store previous state for potential rollback
+      const previousLinks = links;
+
+      setLinks((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        const newItems = arrayMove(items, oldIndex, newIndex);
+
+        const updates = newItems.map((item, index) => ({
+          id: item.id,
+          order: index,
+        }));
+
+        if (reorderTimeoutRef.current) {
+          clearTimeout(reorderTimeoutRef.current);
+        }
+
+        pendingReorderRef.current = updates;
+
+        const timeoutId = setTimeout(() => {
+          const updatesToSend = pendingReorderRef.current;
+          if (updatesToSend) {
+            reorderLinks(updatesToSend).catch((err) => {
+              console.error("Failed to reorder links:", err);
+              error("Failed to save new order");
+              setLinks(previousLinks);
+            });
+            pendingReorderRef.current = null;
+          }
+        }, 500);
+
+        reorderTimeoutRef.current = timeoutId;
+
+        return newItems;
+      });
+    }
+  };
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
@@ -192,7 +276,7 @@ export function DashboardClient({
 
           {!readOnly && showAddForm && <AddLinkForm pageId={page.id} />}
 
-          {page.links.length === 0 ? (
+          {links.length === 0 ? (
             <div className="text-center py-20 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
               <div className="text-6xl mb-4">🔗</div>
               <p className="text-white/40 text-lg mb-2">No links yet</p>
@@ -203,19 +287,34 @@ export function DashboardClient({
               )}
             </div>
           ) : (
-            <div
-              className={
-                view === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  : "space-y-4"
-              }
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              {page.links.map((link) => (
-                <div key={link.id} className="relative group">
-                  <DashboardLinkCard link={link} view={view} />
+              <SortableContext
+                items={links.map((l) => l.id)}
+                strategy={
+                  view === "grid"
+                    ? rectSortingStrategy
+                    : verticalListSortingStrategy
+                }
+              >
+                <div
+                  className={
+                    view === "grid"
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                      : "space-y-4"
+                  }
+                >
+                  {links.map((link) => (
+                    <SortableItem key={link.id} id={link.id}>
+                      <DashboardLinkCard link={link} view={view} />
+                    </SortableItem>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>

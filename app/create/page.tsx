@@ -10,6 +10,25 @@ import { Button } from "@/components/ui";
 import { createPage } from "@/app/actions/pages";
 import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableItem } from "@/components/dashboard/SortableItem";
+
 type ClientPage = Pick<Page, "title" | "description" | "alias">;
 
 type ClientLink = {
@@ -45,6 +64,41 @@ export default function CreatePage() {
   const [view, setView] = useState<"list" | "grid">("list");
   const [isPublishing, setIsPublishing] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setLinks((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        const newItems = arrayMove(items, oldIndex, newIndex);
+
+        return newItems.map((item, index) => ({
+          ...item,
+          order: index,
+        }));
+      });
+    }
+  };
+
   const handleAddLink = (newLink: { title: string; url: string }) => {
     const link: ClientLink = {
       ...newLink,
@@ -70,10 +124,11 @@ export default function CreatePage() {
       const result = await createPage({
         title: page.title,
         description: page.description,
-        links: links.map((l) => ({
+        links: links.map((l, index) => ({
           title: l.title,
           url: l.url,
           image: l.image ?? undefined,
+          order: index,
         })),
       });
 
@@ -147,41 +202,57 @@ export default function CreatePage() {
               />
             )}
 
-            <div
-              className={
-                view === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  : "space-y-4"
-              }
-            >
-              {links.map((link) => (
-                <div key={link.id} className="relative group">
-                  <DashboardLinkCard
-                    link={link}
-                    view={view}
-                    onDelete={(id) =>
-                      setLinks(links.filter((l) => l.id !== id))
+            {links.length === 0 ? (
+              <div className="text-center py-10 text-white/30 italic">
+                No links added yet.
+              </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={links.map((l) => l.id)}
+                  strategy={
+                    view === "grid"
+                      ? rectSortingStrategy
+                      : verticalListSortingStrategy
+                  }
+                >
+                  <div
+                    className={
+                      view === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        : "space-y-4"
                     }
-                    onEdit={(id, formData) => {
-                      const updatedLink = {
-                        ...link,
-                        title: formData.get("title") as string,
-                        url: formData.get("url") as string,
-                        image: formData.get("image") as string,
-                      };
-                      setLinks(
-                        links.map((l) => (l.id === id ? updatedLink : l))
-                      );
-                    }}
-                  />
-                </div>
-              ))}
-              {links.length === 0 && (
-                <div className="text-center py-10 text-white/30 italic">
-                  No links added yet.
-                </div>
-              )}
-            </div>
+                  >
+                    {links.map((link) => (
+                      <SortableItem key={link.id} id={link.id}>
+                        <DashboardLinkCard
+                          link={link}
+                          view={view}
+                          onDelete={(id) =>
+                            setLinks(links.filter((l) => l.id !== id))
+                          }
+                          onEdit={(id, formData) => {
+                            const updatedLink = {
+                              ...link,
+                              title: formData.get("title") as string,
+                              url: formData.get("url") as string,
+                              image: formData.get("image") as string,
+                            };
+                            setLinks(
+                              links.map((l) => (l.id === id ? updatedLink : l))
+                            );
+                          }}
+                        />
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
           </div>
         </div>
       </div>
