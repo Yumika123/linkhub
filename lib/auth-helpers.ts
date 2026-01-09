@@ -22,6 +22,7 @@ export async function getUserPages() {
       include: {
         pages: {
           include: { links: { orderBy: { order: "asc" } } },
+          orderBy: [{ order: "asc" }, { createdAt: "asc" }],
         },
       },
     });

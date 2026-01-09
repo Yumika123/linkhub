@@ -48,10 +48,10 @@ CREATE TABLE "VerificationToken" (
 CREATE TABLE "Page" (
     "id" TEXT NOT NULL,
     "ownerId" TEXT,
-    "alias" TEXT NOT NULL UNIQUE,
+    "alias" TEXT NOT NULL,
     "title" TEXT NOT NULL DEFAULT 'New Page',
     "description" TEXT,
-    "editToken" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
     "type" TEXT NOT NULL DEFAULT 'text',
     "isPublic" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -91,9 +91,6 @@ CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationTok
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Page_alias_key" ON "Page"("alias");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Page_editToken_key" ON "Page"("editToken");
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

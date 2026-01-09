@@ -26,8 +26,7 @@ import {
   verticalListSortingStrategy,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableLink } from "@/components/dashboard/SortableLink";
-import { reorderLinks } from "@/app/actions/links";
+import { SortableItem } from "@/components/dashboard/SortableItem";
 
 export type PageWithLinks = PageModel & {
   links: LinkModel[];
@@ -39,6 +38,7 @@ import { useNotificationStore } from "@/components/ui/Notification/useNotificati
 import { DeletePageModal } from "@/components/DeletePageModal";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
+import { reorderLinks } from "@/app/actions/links";
 
 interface DashboardClientProps {
   page: PageWithLinks;
@@ -308,9 +308,9 @@ export function DashboardClient({
                   }
                 >
                   {links.map((link) => (
-                    <SortableLink key={link.id} id={link.id}>
+                    <SortableItem key={link.id} id={link.id}>
                       <DashboardLinkCard link={link} view={view} />
-                    </SortableLink>
+                    </SortableItem>
                   ))}
                 </div>
               </SortableContext>

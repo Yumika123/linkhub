@@ -2,6 +2,25 @@
 
 import { PageWithLinks } from "@/lib/auth-helpers";
 import { Button, SidebarItem, Logo, UserProfile } from "../ui";
+import { SortableItem } from "@/components/dashboard/SortableItem";
+import { reorderPages } from "@/app/actions/pages";
+import { useEffect, useRef, useState } from "react";
+import {
+  useSensors,
+  useSensor,
+  PointerSensor,
+  KeyboardSensor,
+  DragEndEvent,
+  DndContext,
+  closestCenter,
+} from "@dnd-kit/core";
+import {
+  sortableKeyboardCoordinates,
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 interface SidebarProps {
   pages: PageWithLinks[];
@@ -23,6 +42,84 @@ export function Sidebar({
   userInfo,
   onCreatePage,
 }: SidebarProps) {
+  const [reorderedPages, setReorderedPages] = useState<PageWithLinks[]>(pages);
+
+  useEffect(() => {
+    const sortedPages = [...pages].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0)
+    );
+    setReorderedPages(sortedPages);
+  }, [pages]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const reorderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingReorderRef = useRef<{ id: string; order: number }[] | null>(
+    null
+  );
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    // A small delay before allowing clicks again
+    // This prevents the 'click' event that happens on mouseup from triggering navigation
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 100);
+
+    if (over && active.id !== over.id) {
+      const previousPages = reorderedPages;
+
+      setReorderedPages((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        const newItems = arrayMove(items, oldIndex, newIndex);
+
+        const updates = newItems.map((item, index) => ({
+          id: item.id,
+          order: index,
+        }));
+
+        if (reorderTimeoutRef.current) {
+          clearTimeout(reorderTimeoutRef.current);
+        }
+
+        pendingReorderRef.current = updates;
+
+        const timeoutId = setTimeout(() => {
+          const updatesToSend = pendingReorderRef.current;
+          if (updatesToSend) {
+            reorderPages(updatesToSend).catch((err) => {
+              console.error("Failed to reorder pages:", err);
+              setReorderedPages(previousPages);
+            });
+            pendingReorderRef.current = null;
+          }
+        }, 500);
+
+        reorderTimeoutRef.current = timeoutId;
+
+        return newItems;
+      });
+    }
+  };
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -82,18 +179,35 @@ export function Sidebar({
             <div className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
               Your Pages
             </div>
-            <div className="space-y-2">
-              {pages.map((page) => (
-                <SidebarItem
-                  key={page.id}
-                  label={page.title}
-                  sublabel={`/${page.alias}`}
-                  badge={page.links.length}
-                  isActive={page.alias === currentPageAlias}
-                  href={`/dashboard/${page.alias}`}
-                />
-              ))}
-            </div>
+            <DndContext
+              id="sidebar-dnd-context"
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              onDragStart={handleDragStart}
+              modifiers={[restrictToVerticalAxis]}
+            >
+              <SortableContext
+                items={reorderedPages.map((page) => page.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {reorderedPages.map((page) => (
+                    <SortableItem key={page.id} id={page.id}>
+                      <SidebarItem
+                        key={page.id}
+                        label={page.title}
+                        sublabel={`/${page.alias}`}
+                        badge={page.links.length}
+                        isActive={page.alias === currentPageAlias}
+                        href={`/dashboard/${page.alias}`}
+                        isDragging={isDragging}
+                      />
+                    </SortableItem>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
 
           {/* User Profile */}
