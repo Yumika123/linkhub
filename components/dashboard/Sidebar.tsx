@@ -1,8 +1,9 @@
 "use client";
 
 import { PageWithLinks } from "@/lib/auth-helpers";
-import { Button, SidebarItem, Logo, UserProfile } from "../ui";
+import { Button, SidebarItem, Logo } from "../ui";
 import { SortableItem } from "@/components/dashboard/SortableItem";
+import { UserMenu } from "./UserMenu";
 import { reorderPages } from "@/app/actions/pages";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -220,11 +221,7 @@ export function Sidebar({
           {/* User Profile */}
           {userInfo && (
             <div className="mt-6 pt-6 border-t border-white/10">
-              <UserProfile
-                name={userInfo.name || "User"}
-                image={userInfo.image}
-                subtitle="Linkhub"
-              />
+              <UserMenu user={userInfo} />
             </div>
           )}
         </div>
