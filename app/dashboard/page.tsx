@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getUserPages, hasAccess } from "@/lib/auth-helpers";
 import { CreatePageForm } from "@/components/page/CreatePageForm";
 import { SignOutButton } from "@/components/SignOutButton";
-import { GradientLayout } from "@/components/layouts/GradientLayout";
 import {
   Card,
   CardHeader,
@@ -22,7 +21,7 @@ export default async function DashboardPage() {
   // If logged-in user has no pages, show create form
   if (session?.user && userPages.length === 0) {
     return (
-      <GradientLayout centered>
+      <div className="flex items-center justify-center h-screen">
         <Card
           variant="glass"
           padding="lg"
@@ -44,7 +43,7 @@ export default async function DashboardPage() {
             </CardFooter>
           )}
         </Card>
-      </GradientLayout>
+      </div>
     );
   }
 
