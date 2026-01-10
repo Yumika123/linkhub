@@ -27,12 +27,11 @@ export function DashboardLayoutClient({
 
   const params = useParams();
   const alias = params.alias as string;
-
-  const isMyPage = userPages.some((p) => p.alias === alias);
+  const showSidebar = user !== null && user !== undefined;
 
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
-      {isMyPage && (
+      {showSidebar && (
         <Sidebar
           pages={userPages}
           currentPageAlias={alias}
@@ -43,8 +42,8 @@ export function DashboardLayoutClient({
         />
       )}
 
-      <div className={`${isMyPage ? "lg:pl-64" : ""} min-h-screen`}>
-        {isMyPage && (
+      <div className={`${showSidebar ? "lg:pl-64" : ""} min-h-screen`}>
+        {showSidebar && (
           <div className="lg:hidden p-4 absolute top-0 left-0 z-20">
             <Button
               onClick={() => setSidebarOpen(true)}
