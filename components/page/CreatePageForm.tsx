@@ -58,7 +58,7 @@ export function CreatePageForm({
     }
   }
 
-  const [state, formAction, isPending] = useActionState(handleSubmit, null);
+  const [_, formAction, isPending] = useActionState(handleSubmit, null);
 
   return (
     <form action={formAction} className={`space-y-4 ${className}`}>
