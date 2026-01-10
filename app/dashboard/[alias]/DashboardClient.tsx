@@ -7,7 +7,6 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardLinkCard } from "@/components/dashboard/DashboardLinkCard";
 import { AddLinkForm } from "@/components/AddLinkForm";
-import { SignOutButton } from "@/components/SignOutButton";
 import { PageModal } from "@/components/CreatePageModal";
 
 import {
@@ -249,15 +248,11 @@ export function DashboardClient({
               </svg>
             </a>
 
-            {!readOnly && (
+            {!readOnly && !session?.user && (
               <div className="hidden lg:flex justify-end mb-4">
-                {session?.user ? (
-                  <SignOutButton />
-                ) : (
-                  <div className="text-sm text-white/50 italic">
-                    Anonymous Mode
-                  </div>
-                )}
+                <div className="text-sm text-white/50 italic">
+                  Anonymous Mode
+                </div>
               </div>
             )}
           </div>
