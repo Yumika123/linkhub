@@ -6,7 +6,7 @@ import { RATE_LIMITS, RateLimitError } from "./lib/rate-limit-shared";
 /**
  * Global middleware for security and rate limiting
  */
-export async function middleware(request: NextRequest) {
+async function proxy(request: NextRequest) {
   const response = NextResponse.next();
 
   // Security Headers
@@ -120,3 +120,5 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+
+export default proxy;
