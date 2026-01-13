@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sidebar } from "./Sidebar";
+import { DashboardSidebar } from "./DashboardSidebar";
 import { useParams } from "next/navigation";
 import { PageWithLinks } from "@/lib/auth-helpers";
 import { Button } from "@/components/ui";
@@ -27,23 +27,29 @@ export function DashboardLayoutClient({
 
   const params = useParams();
   const alias = params.alias as string;
-  const showSidebar = user !== null && user !== undefined;
+
+  const isLoggedUser = user !== null && user !== undefined;
 
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
-      {showSidebar && (
-        <Sidebar
+      {isLoggedUser && (
+        <DashboardSidebar
           pages={userPages}
           currentPageAlias={alias}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           userInfo={user}
           onCreatePage={() => setShowCreatePageModal(true)}
+          className={"lg:translate-x-0"}
         />
       )}
 
-      <div className={`${showSidebar ? "lg:pl-64" : ""} min-h-screen`}>
-        {showSidebar && (
+      <div
+        className={`${
+          isLoggedUser ? "lg:pl-64" : ""
+        } min-h-screen transition-[padding] duration-300 ease-in-out`}
+      >
+        {isLoggedUser && (
           <div className="lg:hidden p-4 absolute top-0 left-0 z-20">
             <Button
               onClick={() => setSidebarOpen(true)}
