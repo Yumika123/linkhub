@@ -16,5 +16,7 @@ export const useUIStore = create<UIState>((set) => ({
   toggleStyleSidebar: () =>
     set((state) => ({ isStyleSidebarOpen: !state.isStyleSidebarOpen })),
   customBackground: null,
-  setCustomBackground: (background) => set({ customBackground: background }),
+  setCustomBackground: (background) => {
+    set({ customBackground: background });
+  },
 }));

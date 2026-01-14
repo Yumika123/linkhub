@@ -4,6 +4,8 @@ import { PageWithLinks } from "@/lib/auth-helpers";
 import { Button, SidebarItem, Logo, Sidebar } from "../ui";
 import { SortableItem } from "@/components/dashboard/SortableItem";
 import { UserMenu } from "./UserMenu";
+import { useUIStore } from "@/store/UIStore";
+import { PageStyles } from "@/types/PageStyles";
 import { reorderPages } from "@/app/actions/pages";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -47,6 +49,7 @@ export function DashboardSidebar({
   onCreatePage,
   className,
 }: DashboardSidebarProps) {
+  const { setCustomBackground } = useUIStore();
   const [reorderedPages, setReorderedPages] = useState<PageWithLinks[]>(pages);
 
   useEffect(() => {
@@ -200,6 +203,16 @@ export function DashboardSidebar({
                     isActive={page.alias === currentPageAlias}
                     href={`/dashboard/${page.alias}`}
                     isDragging={isDragging}
+                    onClick={() => {
+                      const styles = page.pageStyle as PageStyles | null;
+                      console.log(
+                        "Sidebar Click:",
+                        page.alias,
+                        "Styles:",
+                        styles
+                      );
+                      setCustomBackground(styles?.background?.color || null);
+                    }}
                   />
                 </SortableItem>
               ))}

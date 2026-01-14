@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { LinkCard } from "@/components/LinkCard";
 import Image from "next/image";
-import { getUserStyle } from "../actions/style";
+import { getCustomPageStyles } from "../actions/customPageStyles";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,7 +29,7 @@ export default async function PublicPage({ params }: PublicPageProps) {
     notFound();
   }
 
-  const pageStyle = await getUserStyle(page.id);
+  const pageStyle = await getCustomPageStyles(page.id);
 
   return (
     <div

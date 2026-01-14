@@ -1,19 +1,19 @@
 "use client";
 
 import * as React from "react";
+import { useController, Control } from "react-hook-form";
 import { cn, isValidHex } from "@/lib/utils";
 import { Input } from "../Input/input";
 import { Button } from "../Button/button";
 
 export interface ColorPickerProps {
-  value: string;
-  onChange: (value: string) => void;
+  control: Control<any>;
+  prefix?: string;
   label?: string;
-  allowGradient?: boolean;
   className?: string;
 }
 
-const PRESET_COLORS = [
+export const PRESET_COLORS = [
   "#6366f1", // indigo
   "#8b5cf6", // purple
   "#ec4899", // pink
@@ -24,7 +24,7 @@ const PRESET_COLORS = [
   "#06b6d4", // cyan
 ];
 
-const PRESET_GRADIENTS = [
+export const PRESET_GRADIENTS = [
   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
   "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
@@ -51,135 +51,152 @@ const ColorInput = ({
 };
 
 export function ColorPicker({
-  value,
-  onChange,
+  control,
+  prefix = "color",
   label,
-  allowGradient = true,
   className,
 }: ColorPickerProps) {
-  const [isGradient, setIsGradient] = React.useState(
-    value.startsWith("linear-gradient")
-  );
-  const [color1, setColor1] = React.useState(PRESET_COLORS[0]);
-  const [color2, setColor2] = React.useState(PRESET_COLORS[1]);
-  const [solidColor, setSolidColor] = React.useState(
-    value.startsWith("#") ? value : PRESET_COLORS[0]
-  );
+  const { field: modeField } = useController({
+    name: `${prefix}Mode`,
+    control,
+    defaultValue: "solid",
+  });
 
-  React.useEffect(() => {
-    if (value.startsWith("linear-gradient")) {
-      setIsGradient(true);
+  const {
+    field: solidField,
+    fieldState: { error: solidError },
+  } = useController({
+    name: `${prefix}Solid`,
+    control,
+    rules: {
+      validate: (value) => {
+        if (modeField.value === "solid") {
+          return isValidHex(value) || "Invalid hex color";
+        }
+        return true;
+      },
+    },
+  });
 
-      const matches = value.match(/#([0-9a-fA-F]{3}){1,2}\b/g);
-      if (matches && matches.length >= 2) {
-        setColor1(matches[0]);
-        setColor2(matches[1]);
-      }
-    } else if (value.startsWith("#")) {
-      setIsGradient(false);
-      setSolidColor(value);
+  const {
+    field: gradient1Field,
+    fieldState: { error: gradient1Error },
+  } = useController({
+    name: `${prefix}Gradient1`,
+    control,
+    rules: {
+      validate: (value) => {
+        if (modeField.value === "gradient") {
+          return isValidHex(value) || "Invalid hex color";
+        }
+        return true;
+      },
+    },
+  });
+
+  const {
+    field: gradient2Field,
+    fieldState: { error: gradient2Error },
+  } = useController({
+    name: `${prefix}Gradient2`,
+    control,
+    rules: {
+      validate: (value) => {
+        if (modeField.value === "gradient") {
+          return isValidHex(value) || "Invalid hex color";
+        }
+        return true;
+      },
+    },
+  });
+
+  const handlePresetGradient = (gradient: string) => {
+    const matches = gradient.match(/#(?:[0-9a-fA-F]{3}){1,2}\b/g);
+    if (matches && matches.length >= 2) {
+      batch(() => {
+        modeField.onChange("gradient");
+        gradient1Field.onChange(matches[0]);
+        gradient2Field.onChange(matches[1]);
+      });
     }
-  }, [value]);
-
-  const handleGradientChange = (c1: string, c2: string) => {
-    if (!isValidHex(c1) || !isValidHex(c2)) return;
-    const gradient = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
-    onChange(gradient);
   };
 
-  const handleSolidChange = (color: string) => {
-    setSolidColor(color);
-    if (isValidHex(color)) {
-      onChange(color);
-    }
+  const handlePresetSolid = (color: string) => {
+    batch(() => {
+      modeField.onChange("solid");
+      solidField.onChange(color);
+    });
   };
 
-  const handleToggleMode = () => {
-    const newIsGradient = !isGradient;
-    setIsGradient(newIsGradient);
-    if (newIsGradient) {
-      handleGradientChange(color1, color2);
-    } else {
-      onChange(solidColor);
-    }
-  };
+  // Helper to batch updates if possible, though React 18 auto-batches.
+  // We'll just call them sequentially.
+  const batch = (fn: () => void) => fn();
 
   return (
     <div className={cn("space-y-3", className)}>
-      {label && (
-        <label className="text-sm font-medium text-white/90">{label}</label>
-      )}
+      {label && <label className="text-sm text-white/90">{label}</label>}
 
       <div
         className="w-full h-20 rounded-xl border-2 border-white/20 shadow-lg"
-        style={{ background: value }}
+        style={{
+          background:
+            modeField.value === "gradient"
+              ? `linear-gradient(135deg, ${gradient1Field.value} 0%, ${gradient2Field.value} 100%)`
+              : solidField.value,
+        }}
       />
 
       <div className="flex gap-2">
         <Button
           type="button"
-          variant={!isGradient ? "primary" : "ghost"}
+          variant={modeField.value === "solid" ? "primary" : "ghost"}
           buttonSize="sm"
-          onClick={() => handleToggleMode()}
+          onClick={() => modeField.onChange("solid")}
           className="flex-1"
         >
           Solid
         </Button>
-        {allowGradient && (
-          <Button
-            type="button"
-            variant={isGradient ? "primary" : "ghost"}
-            buttonSize="sm"
-            onClick={() => handleToggleMode()}
-            className="flex-1"
-          >
-            Gradient
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant={modeField.value === "gradient" ? "primary" : "ghost"}
+          buttonSize="sm"
+          onClick={() => modeField.onChange("gradient")}
+          className="flex-1"
+        >
+          Gradient
+        </Button>
       </div>
 
-      {isGradient ? (
+      {modeField.value === "gradient" ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <ColorInput
-              value={color1}
-              onChange={(value) => {
-                setColor1(value);
-                handleGradientChange(value, color2);
-              }}
+              value={gradient1Field.value}
+              onChange={gradient1Field.onChange}
             />
             <div className="flex-1">
               <Input
-                value={color1}
-                onChange={(e) => {
-                  setColor1(e.target.value);
-                  handleGradientChange(e.target.value, color2);
-                }}
+                value={gradient1Field.value}
+                onChange={gradient1Field.onChange}
                 placeholder="#6366f1"
                 className={cn("w-full", {
-                  "border-red-400": !isValidHex(color1),
+                  "border-red-400": !!gradient1Error,
                 })}
               />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <ColorInput
-              value={isValidHex(color2) ? color2 : "#000000"}
-              onChange={(value) => {
-                setColor2(value);
-                handleGradientChange(color1, value);
-              }}
+              value={gradient2Field.value}
+              onChange={gradient2Field.onChange}
             />
             <div className="flex-1">
               <Input
-                value={color2}
-                onChange={(e) => {
-                  setColor2(e.target.value);
-                  handleGradientChange(color1, e.target.value);
-                }}
+                value={gradient2Field.value}
+                onChange={gradient2Field.onChange}
                 placeholder="#8b5cf6"
                 className={cn("w-full", {
-                  "border-red-400": !isValidHex(color2),
+                  "border-red-400": !!gradient2Error,
                 })}
               />
             </div>
@@ -190,8 +207,8 @@ export function ColorPicker({
               <button
                 key={idx}
                 type="button"
-                onClick={() => onChange(gradient)}
-                className="h-10 rounded-lg border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105"
+                onClick={() => handlePresetGradient(gradient)}
+                className="h-10 rounded-lg border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105 hover:cursor-pointer"
                 style={{ background: gradient }}
               />
             ))}
@@ -201,19 +218,16 @@ export function ColorPicker({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <ColorInput
-              value={solidColor}
-              onChange={(value) => {
-                setSolidColor(value);
-                handleSolidChange(value);
-              }}
+              value={solidField.value}
+              onChange={solidField.onChange}
             />
             <div className="flex-1">
               <Input
-                value={solidColor}
-                onChange={(e) => handleSolidChange(e.target.value)}
+                value={solidField.value}
+                onChange={solidField.onChange}
                 placeholder="#6366f1"
                 className={cn("w-full", {
-                  "border-red-400": !isValidHex(solidColor),
+                  "border-red-400": !!solidError,
                 })}
               />
             </div>
@@ -224,8 +238,8 @@ export function ColorPicker({
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleSolidChange(color)}
-                className="h-10 rounded-lg border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105"
+                onClick={() => handlePresetSolid(color)}
+                className="h-10 rounded-lg border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105 hover:cursor-pointer"
                 style={{ backgroundColor: color }}
               />
             ))}
