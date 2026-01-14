@@ -43,7 +43,7 @@ const ColorInput = ({
   return (
     <input
       type="color"
-      value={value}
+      value={value || "#000000"}
       onChange={(e) => onChange(e.target.value)}
       className="w-12 h-12 rounded-lg cursor-pointer border border-white/20"
     />

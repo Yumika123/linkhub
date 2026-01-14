@@ -30,8 +30,8 @@ const parseBackground = (bg: string | null): StyleFormValues => {
     return {
       backgroundMode: "solid",
       backgroundSolid: PRESET_COLORS[0],
-      backgroundGradient1: PRESET_COLORS[0],
-      backgroundGradient2: PRESET_COLORS[1],
+      backgroundGradient1: "",
+      backgroundGradient2: "",
     };
   }
 
@@ -39,7 +39,7 @@ const parseBackground = (bg: string | null): StyleFormValues => {
     const matches = bg.match(/#(?:[0-9a-fA-F]{3}){1,2}\b/g);
     return {
       backgroundMode: "gradient",
-      backgroundSolid: PRESET_COLORS[0],
+      backgroundSolid: "",
       backgroundGradient1: matches?.[0] || PRESET_COLORS[0],
       backgroundGradient2: matches?.[1] || PRESET_COLORS[1],
     };
@@ -48,8 +48,8 @@ const parseBackground = (bg: string | null): StyleFormValues => {
   return {
     backgroundMode: "solid",
     backgroundSolid: bg,
-    backgroundGradient1: PRESET_COLORS[0],
-    backgroundGradient2: PRESET_COLORS[1],
+    backgroundGradient1: "",
+    backgroundGradient2: "",
   };
 };
 
