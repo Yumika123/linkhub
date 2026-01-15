@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Sidebar } from "./Sidebar";
+import { useState, useEffect } from "react";
+import { DashboardSidebar } from "./DashboardSidebar";
 import { useParams } from "next/navigation";
 import { PageWithLinks } from "@/lib/auth-helpers";
 import { Button } from "@/components/ui";
 import { PageModal } from "@/components/CreatePageModal";
+import { useUIStore } from "@/store/UIStore";
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode;
@@ -27,23 +28,40 @@ export function DashboardLayoutClient({
 
   const params = useParams();
   const alias = params.alias as string;
-  const showSidebar = user !== null && user !== undefined;
+
+  const { isStyleSidebarOpen, setCustomBackground } = useUIStore();
+  const isLoggedUser = user !== null && user !== undefined;
+  const isSidebarVisible = !isStyleSidebarOpen;
+
+  // Cleanup background when leaving dashboard layout
+  useEffect(() => {
+    return () => {
+      setCustomBackground(null);
+    };
+  }, [setCustomBackground]);
 
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
-      {showSidebar && (
-        <Sidebar
+      {isLoggedUser && (
+        <DashboardSidebar
           pages={userPages}
           currentPageAlias={alias}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           userInfo={user}
           onCreatePage={() => setShowCreatePageModal(true)}
+          className={
+            isSidebarVisible ? "lg:translate-x-0" : "lg:-translate-x-full"
+          }
         />
       )}
 
-      <div className={`${showSidebar ? "lg:pl-64" : ""} min-h-screen`}>
-        {showSidebar && (
+      <div
+        className={`${isLoggedUser && isSidebarVisible ? "lg:pl-64" : ""} ${
+          isStyleSidebarOpen ? "lg:pr-[420px]" : ""
+        } min-h-screen transition-[padding] duration-300 ease-in-out`}
+      >
+        {isLoggedUser && isSidebarVisible && (
           <div className="lg:hidden p-4 absolute top-0 left-0 z-20">
             <Button
               onClick={() => setSidebarOpen(true)}

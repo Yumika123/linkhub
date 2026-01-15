@@ -10,6 +10,7 @@ interface SidebarItemProps {
   isDragging?: boolean;
   href: string;
   className?: string;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export function SidebarItem({
@@ -21,6 +22,7 @@ export function SidebarItem({
   href,
   className,
   isDragging,
+  onClick,
 }: SidebarItemProps) {
   return (
     <Link
@@ -36,7 +38,9 @@ export function SidebarItem({
         if (isDragging) {
           e.preventDefault();
           e.stopPropagation();
+          return;
         }
+        onClick?.(e);
       }}
     >
       <div className="flex items-center gap-3">

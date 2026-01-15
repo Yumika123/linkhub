@@ -54,6 +54,7 @@ export default async function DashboardAliasPage({
 
   return (
     <DashboardClient
+      key={page.id}
       page={page}
       userPages={userPages}
       session={session}
