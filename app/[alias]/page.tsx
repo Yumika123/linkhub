@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { LinkCard } from "@/components/LinkCard";
 import Image from "next/image";
+import { getCustomPageStyles } from "../actions/customPageStyles";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,8 +29,13 @@ export default async function PublicPage({ params }: PublicPageProps) {
     notFound();
   }
 
+  const pageStyle = await getCustomPageStyles(page.id);
+
   return (
-    <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
+    <div
+      className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white"
+      style={{ background: pageStyle?.background.color ?? undefined }}
+    >
       <main className="relative z-10 container mx-auto px-4 py-16 md:py-24 max-w-6xl">
         <div className="flex flex-col items-center text-center mb-20 animate-float">
           <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-md p-1 mb-8 shadow-2xl ring-4 ring-white/10 relative">

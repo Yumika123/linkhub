@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import * as React from "react";
 import { Link as LinkModel, Page as PageModel } from "@prisma/client";
 import { Session } from "next-auth";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -36,8 +37,11 @@ import { deletePage } from "@/app/actions/pages";
 import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 import { DeletePageModal } from "@/components/DeletePageModal";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui";
-import { SignOutButton } from "@/components/SignOutButton";
+import { Button, StyleSidebar } from "@/components/ui";
+import { Palette } from "lucide-react";
+import { usePageStyles } from "@/hooks/usePageStyles";
+import { PageStyles } from "@/types/PageStyles";
+import { useUIStore } from "@/store/UIStore";
 
 interface DashboardClientProps {
   page: PageWithLinks;
@@ -61,6 +65,28 @@ export function DashboardClient({
   const [showAttachModal, setShowAttachModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const pageStyles = page.pageStyle as PageStyles;
+
+  const {
+    showStyleSidebar,
+    isSaving,
+    background,
+    openStyleSidebar,
+    closeStyleSidebar,
+    handleBackgroundChange,
+    handleSave,
+    handleReset,
+  } = usePageStyles({
+    pageId: page.id,
+    initialStyles: pageStyles,
+  });
+
+  const { setCustomBackground } = useUIStore();
+
+  React.useLayoutEffect(() => {
+    setCustomBackground(background || null);
+  }, [background, setCustomBackground, page.alias]);
 
   // Local state for links to support optimistic updates
   const [links, setLinks] = useState<LinkModel[]>(page.links);
@@ -174,7 +200,7 @@ export function DashboardClient({
   };
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative transition-all duration-300 ease-in-out">
       <div className="relative z-10 p-4 md:p-8">
         {readOnly && (
           <div className="bg-blue-600/20 border border-blue-400/30 text-blue-100 px-6 py-4 rounded-xl mb-8 flex items-center justify-between backdrop-blur-sm shadow-lg">
@@ -188,6 +214,20 @@ export function DashboardClient({
               as="a"
             >
               Login / Sign Up
+            </Button>
+          </div>
+        )}
+
+        {/* Style Customization Button - Fixed in top-right corner */}
+        {!readOnly && (
+          <div className="fixed top-8 right-8 z-30">
+            <Button
+              onClick={openStyleSidebar}
+              variant="glass"
+              buttonSize="icon"
+              className="flex items-center gap-2 shadow-lg"
+            >
+              <Palette className="w-5 h-5" />
             </Button>
           </div>
         )}
@@ -213,9 +253,7 @@ export function DashboardClient({
 
           {!readOnly && (
             <div className="hidden lg:flex justify-end mb-4">
-              {session?.user ? (
-                <SignOutButton />
-              ) : (
+              {!session?.user && (
                 <div className="text-sm text-white/50 italic">
                   Anonymous Mode
                 </div>
@@ -304,6 +342,18 @@ export function DashboardClient({
           onConfirm={handleConfirmDelete}
         />
       )}
+
+      <StyleSidebar
+        isOpen={showStyleSidebar}
+        onClose={() => {
+          closeStyleSidebar();
+        }}
+        background={background}
+        onBackgroundChange={handleBackgroundChange}
+        onSave={handleSave}
+        onReset={handleReset}
+        isSaving={isSaving}
+      />
     </div>
   );
 }

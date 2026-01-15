@@ -45,10 +45,31 @@ export const Primary: Story = {
   },
 };
 
+export const Secondary: Story = {
+  args: {
+    children: "Secondary Button",
+    variant: "secondary",
+  },
+};
+
 export const Glass: Story = {
   args: {
     children: "Glass Button",
     variant: "glass",
+  },
+};
+
+export const Outline: Story = {
+  args: {
+    children: "Outline Button",
+    variant: "outline",
+  },
+};
+
+export const Ghost: Story = {
+  args: {
+    children: "Ghost Button",
+    variant: "ghost",
   },
 };
 

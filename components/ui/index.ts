@@ -13,7 +13,7 @@ export { Modal } from "./Modal/Modal";
 export { Dropdown } from "./Dropdown/Dropdown";
 export { UserProfile } from "./UserProfile/UserProfile";
 export { ColorPicker } from "./ColorPicker/ColorPicker";
-export { StyleSidebar } from "./StyleSidebar/StyleSidebar";
+export { StyleSidebar } from "../dashboard/StyleSidebar";
 export { Sidebar } from "./Sidebar/Sidebar";
 export * from "./Notification/useNotification";
 export * from "./Notification/NotificationContainer";
