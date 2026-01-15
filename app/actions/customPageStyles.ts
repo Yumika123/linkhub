@@ -12,12 +12,12 @@ export async function getCustomPageStyles(
   try {
     if (!pageId) {
       const session = await auth();
-      if (!session?.user?.email) {
+      if (!session?.user?.id) {
         return null;
       }
 
       const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
+        where: { id: session.user.id },
         include: {
           pages: {
             take: 1,
@@ -74,7 +74,7 @@ export async function updateCustomPageStyles(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return { success: false, error: "Unauthorized" };
     }
 
@@ -103,7 +103,7 @@ export async function deleteCustomPageStyles(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return { success: false, error: "Unauthorized" };
     }
 

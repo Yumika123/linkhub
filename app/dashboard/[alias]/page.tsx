@@ -33,10 +33,7 @@ export default async function DashboardAliasPage({
         isOrphan = true;
       }
 
-      if (
-        !session?.user?.email ||
-        foundPage.owner?.email !== session.user.email
-      ) {
+      if (!session?.user?.id || foundPage.owner?.id !== session.user.id) {
         readOnly = true;
       }
     }

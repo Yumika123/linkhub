@@ -24,8 +24,7 @@ export async function updatePage(
 
   if (!page) throw new Error("Page not found");
 
-  const isOwner =
-    session?.user?.email && page.owner?.email === session.user.email;
+  const isOwner = session?.user?.id && page.owner?.id === session.user.id;
 
   if (!isOwner) {
     throw new Error("Unauthorized");

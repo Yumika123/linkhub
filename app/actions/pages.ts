@@ -64,9 +64,9 @@ export async function createPage(data: CreatePageData) {
 
   // 2. Owner Resolution
   let ownerId: string | null = null;
-  if (session?.user?.email) {
+  if (session?.user?.id) {
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
     });
     if (user) ownerId = user.id;
   }
@@ -117,7 +117,7 @@ export async function createPage(data: CreatePageData) {
 export async function deletePage(pageId: string) {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
@@ -144,7 +144,7 @@ export async function deletePage(pageId: string) {
 export async function reorderPages(items: { id: string; order: number }[]) {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 

@@ -6,12 +6,12 @@ import { prisma } from "@/lib/prisma";
 export async function deleteAccount() {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { id: session.user.id },
   });
 
   if (!user) {

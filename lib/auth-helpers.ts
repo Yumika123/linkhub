@@ -15,10 +15,10 @@ export async function getUserPages() {
   let userPages: PageWithLinks[] = [];
   let user = null;
 
-  if (session?.user?.email) {
+  if (session?.user?.id) {
     // Logged in user flow
     user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       include: {
         pages: {
           include: { links: { orderBy: { order: "asc" } } },

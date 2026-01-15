@@ -25,8 +25,7 @@ export async function createLink(formData: FormData) {
 
   if (!page) throw new Error("Page not found");
 
-  const isOwner =
-    session?.user?.email && page.owner?.email === session.user.email;
+  const isOwner = session?.user?.id && page.owner?.id === session.user.id;
 
   if (!isOwner) {
     throw new Error("Unauthorized");
@@ -54,8 +53,7 @@ export async function deleteLink(linkId: string) {
 
   if (!link) throw new Error("Link not found");
 
-  const isOwner =
-    session?.user?.email && link.page.owner?.email === session.user.email;
+  const isOwner = session?.user?.id && link.page.owner?.id === session.user.id;
 
   if (!isOwner) {
     throw new Error("Unauthorized");
@@ -72,7 +70,7 @@ export async function deleteLink(linkId: string) {
 export async function reorderLinks(items: { id: string; order: number }[]) {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
