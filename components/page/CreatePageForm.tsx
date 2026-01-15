@@ -1,7 +1,6 @@
 "use client";
 
 import { createPage } from "@/app/actions/pages";
-import { updatePage } from "@/app/actions/updateExitingPage";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button/button";
 import { Input } from "@/components/ui/Input/input";

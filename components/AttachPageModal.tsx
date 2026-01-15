@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/button";
-import { attachAnonymousPage } from "@/app/actions/attach";
+import { attachAnonymousPage } from "@/app/actions/pages";
 import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 
 interface AttachPageModalProps {

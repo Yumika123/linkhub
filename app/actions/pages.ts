@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
 import { RATE_LIMITS, RateLimitError } from "@/lib/rate-limit-shared";
+import z from "zod";
 
 export type CreatePageData = {
   alias?: string;
@@ -14,7 +15,29 @@ export type CreatePageData = {
   links?: { title: string; url: string; image?: string }[];
 };
 
+const CreatePageSchema = z.object({
+  alias: z
+    .string()
+    .min(3)
+    .max(50)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
+  title: z.string().min(1).max(200),
+  description: z.string().max(1000).nullable().optional(),
+  links: z.array(
+    z.object({
+      title: z.string().min(1).max(200),
+      url: z.url(),
+      image: z.url().optional(),
+    })
+  ),
+});
+
+const EditPageSchema = CreatePageSchema.omit({ links: true });
+
 export async function createPage(data: CreatePageData) {
+  const validatedData = CreatePageSchema.parse(data);
+
   const session = await auth();
   const identifier = await getClientIdentifier();
   const limitConfig = session?.user
@@ -35,7 +58,7 @@ export async function createPage(data: CreatePageData) {
   }
 
   // 1. Alias Generation/Validation
-  let alias = data.alias;
+  let alias = validatedData.alias;
 
   if (!session?.user) {
     // Anonymous: always UUID
@@ -50,7 +73,7 @@ export async function createPage(data: CreatePageData) {
   if (!alias) return { error: "Alias generation failed" };
 
   // Validate custom alias for logged in users
-  if (session?.user && data.alias && data.alias === alias) {
+  if (session?.user && validatedData.alias && validatedData.alias === alias) {
     if (alias.length < 3)
       return { error: "Alias must be at least 3 characters" };
     if (alias.length > 50)
@@ -88,14 +111,14 @@ export async function createPage(data: CreatePageData) {
     const newPage = await prisma.page.create({
       data: {
         alias,
-        title: data.title || (ownerId ? "New Page" : "Anonymous Page"),
-        description: data.description || null,
+        title: validatedData.title || (ownerId ? "New Page" : "Anonymous Page"),
+        description: validatedData.description || null,
         ownerId,
         isPublic: true,
         type: "list",
         links: {
           create:
-            data.links?.map((link, idx) => ({
+            validatedData.links?.map((link, idx) => ({
               title: link.title,
               url: link.url,
               image: link.image,
@@ -121,21 +144,26 @@ export async function deletePage(pageId: string) {
     throw new Error("Unauthorized");
   }
 
-  const page = await prisma.page.findUnique({
-    where: { id: pageId },
-    include: { owner: true },
+  const page = await prisma.page.findFirst({
+    where: {
+      id: pageId,
+      ownerId: session.user.id,
+    },
   });
 
   if (!page) throw new Error("Page not found");
 
-  const isOwner = page.owner?.email === session.user.email;
+  const isOwner = page.ownerId === session.user.id;
 
   if (!isOwner) {
     throw new Error("Unauthorized");
   }
 
   await prisma.page.delete({
-    where: { id: pageId },
+    where: {
+      id: pageId,
+      ownerId: session.user.id,
+    },
   });
 
   revalidatePath("/dashboard");
@@ -171,4 +199,64 @@ export async function reorderPages(items: { id: string; order: number }[]) {
       })
     )
   );
+}
+
+export async function updatePage(
+  pageId: string,
+  data: {
+    type?: string;
+    isPublic?: boolean;
+    title?: string;
+    description?: string;
+  }
+) {
+  const validatedData = EditPageSchema.parse(data);
+  const session = await auth();
+
+  const page = await prisma.page.findUnique({
+    where: { id: pageId },
+    include: { owner: true },
+  });
+
+  if (!page) throw new Error("Page not found");
+
+  const isOwner = session?.user?.id && page.owner?.id === session.user.id;
+
+  if (!isOwner) {
+    throw new Error("Unauthorized");
+  }
+
+  await prisma.page.update({
+    where: { id: pageId },
+    data: validatedData,
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/${page.alias}`);
+}
+
+export async function attachAnonymousPage(pageId: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const page = await prisma.page.findUnique({
+    where: {
+      id: pageId,
+    },
+  });
+
+  if (!page) throw new Error("Page not found");
+
+  if (page.ownerId) {
+    throw new Error("Page is already owned");
+  }
+
+  await prisma.page.update({
+    where: { id: pageId },
+    data: { ownerId: session.user.id },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/${page.alias}`);
+  return { success: true };
 }

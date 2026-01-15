@@ -5,28 +5,40 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
 import { RATE_LIMITS } from "@/lib/rate-limit-shared";
+import { z } from "zod";
+
+const LinkSchema = z.object({
+  pageId: z.string(),
+  title: z.string().min(1).max(200),
+  url: z.url(),
+});
+
+const EditLinkSchema = LinkSchema.omit({ pageId: true });
 
 export async function createLink(formData: FormData) {
+  const stringData = Object.fromEntries(formData.entries());
+  const validatedData = LinkSchema.parse(stringData);
   const session = await auth();
 
   const identifier = await getClientIdentifier();
-
   await rateLimit(identifier, RATE_LIMITS.AUTH_CREATE_LINK);
 
-  const title = formData.get("title") as string;
-  const url = formData.get("url") as string;
-  const pageId = formData.get("pageId") as string;
+  const title = validatedData.title;
+  const url = validatedData.url;
+  const pageId = validatedData.pageId;
 
-  // Verify that page owner is the same as the session user
   const page = await prisma.page.findUnique({
-    where: { id: pageId },
-    include: { owner: true },
+    where: {
+      id: pageId,
+      ownerId: session?.user?.id,
+    },
   });
 
-  if (!page) throw new Error("Page not found");
+  if (!page) {
+    throw new Error("Page not found");
+  }
 
-  const isOwner = session?.user?.id && page.owner?.id === session.user.id;
-
+  const isOwner = session?.user?.id && page.ownerId === session.user.id;
   if (!isOwner) {
     throw new Error("Unauthorized");
   }
@@ -46,18 +58,18 @@ export async function createLink(formData: FormData) {
 export async function deleteLink(linkId: string) {
   const session = await auth();
 
-  const link = await prisma.link.findUnique({
-    where: { id: linkId },
+  const link = await prisma.link.findFirst({
+    where: {
+      id: linkId,
+      page: {
+        owner: {
+          id: session?.user?.id,
+        },
+      },
+    },
     include: { page: { include: { owner: true } } },
   });
-
-  if (!link) throw new Error("Link not found");
-
-  const isOwner = session?.user?.id && link.page.owner?.id === session.user.id;
-
-  if (!isOwner) {
-    throw new Error("Unauthorized");
-  }
+  if (!link) throw new Error("Unauthorized or not found");
 
   await prisma.link.delete({
     where: { id: link.id },
@@ -97,4 +109,34 @@ export async function reorderLinks(items: { id: string; order: number }[]) {
       })
     )
   );
+}
+
+export async function editLink(linkId: string, formData: FormData) {
+  const stringData = Object.fromEntries(formData.entries());
+  const validatedData = EditLinkSchema.parse(stringData);
+  const session = await auth();
+
+  const title = validatedData.title;
+  const url = validatedData.url;
+
+  const link = await prisma.link.findFirst({
+    where: {
+      id: linkId,
+      page: {
+        owner: {
+          id: session?.user?.id,
+        },
+      },
+    },
+    include: { page: { include: { owner: true } } },
+  });
+  if (!link) throw new Error("Unauthorized or not found");
+
+  await prisma.link.update({
+    where: { id: linkId },
+    data: { title, url },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/${link.page.alias}`);
 }

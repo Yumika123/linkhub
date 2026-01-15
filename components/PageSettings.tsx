@@ -1,7 +1,6 @@
 "use client";
 
-import { updatePage } from "@/app/actions/updateExitingPage";
-import { deletePage } from "@/app/actions/pages";
+import { deletePage, updatePage } from "@/app/actions/pages";
 import { Page } from "@prisma/client";
 import { useTransition } from "react";
 

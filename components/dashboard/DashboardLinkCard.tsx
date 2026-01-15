@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Link as LinkModel } from "@prisma/client";
 import { getLinkIcon } from "@/lib/link-icons";
-import { editLink } from "@/app/actions/editLink";
+import { editLink } from "@/app/actions/links";
 import { Input } from "@/components/ui/Input/input";
 import { Button } from "@/components/ui/Button/button";
 import { DeleteLinkButton } from "../DeleteLinkButton";

@@ -10,12 +10,12 @@ export async function getCustomPageStyles(
   pageId?: string
 ): Promise<PageStyles | null> {
   try {
-    if (!pageId) {
-      const session = await auth();
-      if (!session?.user?.id) {
-        return null;
-      }
+    const session = await auth();
+    if (!session?.user?.id) {
+      return null;
+    }
 
+    if (!pageId) {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         include: {
@@ -33,7 +33,10 @@ export async function getCustomPageStyles(
     }
 
     const page = await prisma.page.findUnique({
-      where: { id: pageId },
+      where: {
+        id: pageId,
+        ownerId: session.user.id,
+      },
     });
 
     if (!page || !page.pageStyle) {
@@ -79,7 +82,10 @@ export async function updateCustomPageStyles(
     }
 
     const page = await prisma.page.update({
-      where: { id: pageId },
+      where: {
+        id: pageId,
+        ownerId: session.user.id,
+      },
       data: { pageStyle: data },
     });
 
@@ -108,7 +114,10 @@ export async function deleteCustomPageStyles(
     }
 
     const page = await prisma.page.update({
-      where: { id: pageId },
+      where: {
+        id: pageId,
+        ownerId: session.user.id,
+      },
       data: { pageStyle: Prisma.DbNull },
     });
 
