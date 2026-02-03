@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { PageWithLinks } from "@/lib/auth-helpers";
 import { Button } from "@/components/ui";
 import { PageModal } from "@/components/CreatePageModal";
 import { useUIStore } from "@/store/UIStore";
+import { DeletePageModal } from "@/components/DeletePageModal";
+import { deletePage } from "@/app/actions/pages";
+import { useNotificationStore } from "@/components/ui/Notification/useNotification";
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode;
@@ -25,6 +28,12 @@ export function DashboardLayoutClient({
 }: DashboardLayoutClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreatePageModal, setShowCreatePageModal] = useState(false);
+  const [editingPage, setEditingPage] = useState<PageWithLinks | null>(null);
+  const [deletingPage, setDeletingPage] = useState<PageWithLinks | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const router = useRouter();
+  const { success, error } = useNotificationStore();
 
   const params = useParams();
   const alias = params.alias as string;
@@ -50,6 +59,8 @@ export function DashboardLayoutClient({
           onClose={() => setSidebarOpen(false)}
           userInfo={user}
           onCreatePage={() => setShowCreatePageModal(true)}
+          onEditPage={(page) => setEditingPage(page)}
+          onDeletePage={(page) => setDeletingPage(page)}
           className={
             isSidebarVisible ? "lg:translate-x-0" : "lg:-translate-x-full"
           }
@@ -86,6 +97,49 @@ export function DashboardLayoutClient({
 
       {showCreatePageModal && (
         <PageModal onClose={() => setShowCreatePageModal(false)} />
+      )}
+
+      {editingPage && (
+        <PageModal
+          onClose={() => setEditingPage(null)}
+          page={editingPage}
+          isEditing
+        />
+      )}
+
+      {deletingPage && (
+        <DeletePageModal
+          isOpen={true}
+          isDeleting={isDeleting}
+          onClose={() => setDeletingPage(null)}
+          onConfirm={async () => {
+            if (!deletingPage) return;
+            setIsDeleting(true);
+
+            // Optimistic Redirect if needed
+            if (deletingPage.alias === alias) {
+              const remainingPages = userPages.filter(
+                (p) => p.id !== deletingPage.id
+              );
+              let targetUrl = "/";
+              if (remainingPages.length > 0) {
+                targetUrl = `/dashboard/${remainingPages[0].alias}`;
+              }
+              router.push(targetUrl);
+            }
+
+            try {
+              await deletePage(deletingPage.id);
+              success("Page deleted successfully", "Success");
+              setDeletingPage(null);
+            } catch (e: any) {
+              console.error("Deletion failed", e);
+              error(e.message || "Failed to delete page", "Error");
+            } finally {
+              setIsDeleting(false);
+            }
+          }}
+        />
       )}
     </div>
   );

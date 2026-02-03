@@ -78,7 +78,7 @@ export default function CreatePage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -136,7 +136,7 @@ export default function CreatePage() {
         router.push(`/dashboard/${result.alias}`);
       } else if (result.isRateLimit) {
         error(
-          `Rate limit exceeded. Please try again in ${result.retryAfter} seconds.`
+          `Rate limit exceeded. Please try again in ${result.retryAfter} seconds.`,
         );
       } else {
         error("Failed to publish: " + (result.error || "Unknown error"));
@@ -148,6 +148,8 @@ export default function CreatePage() {
       setIsPublishing(false);
     }
   };
+
+  // TODO: add possibility to change page title and description
 
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
@@ -184,7 +186,6 @@ export default function CreatePage() {
               view={view}
               onViewChange={setView}
               onAddLink={() => setShowAddForm(true)}
-              onEditPage={() => setShowEditForm(true)}
             />
 
             {showAddForm && (
@@ -243,7 +244,7 @@ export default function CreatePage() {
                               image: formData.get("image") as string,
                             };
                             setLinks(
-                              links.map((l) => (l.id === id ? updatedLink : l))
+                              links.map((l) => (l.id === id ? updatedLink : l)),
                             );
                           }}
                         />

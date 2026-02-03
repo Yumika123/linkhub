@@ -1,7 +1,7 @@
 "use client";
 
 import { PageWithLinks } from "@/lib/auth-helpers";
-import { Button, SidebarItem, Logo, Sidebar } from "../ui";
+import { Button, SidebarItem, Logo, Sidebar, Dropdown } from "../ui";
 import { SortableItem } from "@/components/dashboard/SortableItem";
 import { UserMenu } from "./UserMenu";
 import { useUIStore } from "@/store/UIStore";
@@ -25,7 +25,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { X } from "lucide-react";
+import { X, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 interface DashboardSidebarProps {
   pages: PageWithLinks[];
@@ -37,6 +37,8 @@ interface DashboardSidebarProps {
     image?: string | null;
   } | null;
   onCreatePage?: () => void;
+  onEditPage?: (page: PageWithLinks) => void;
+  onDeletePage?: (page: PageWithLinks) => void;
   className?: string;
 }
 
@@ -47,6 +49,8 @@ export function DashboardSidebar({
   onClose,
   userInfo,
   onCreatePage,
+  onEditPage,
+  onDeletePage,
   className,
 }: DashboardSidebarProps) {
   const { setCustomBackground } = useUIStore();
@@ -54,7 +58,7 @@ export function DashboardSidebar({
 
   useEffect(() => {
     const sortedPages = [...pages].sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0)
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
     );
     setReorderedPages(sortedPages);
   }, [pages]);
@@ -73,12 +77,12 @@ export function DashboardSidebar({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const reorderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingReorderRef = useRef<{ id: string; order: number }[] | null>(
-    null
+    null,
   );
 
   const [isDragging, setIsDragging] = useState(false);
@@ -209,10 +213,52 @@ export function DashboardSidebar({
                         "Sidebar Click:",
                         page.alias,
                         "Styles:",
-                        styles
+                        styles,
                       );
                       setCustomBackground(styles?.background?.color || null);
                     }}
+                    actions={
+                      (onEditPage || onDeletePage) && (
+                        <Dropdown
+                          trigger={
+                            <div className="p-1 rounded-md hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </div>
+                          }
+                          showChevron={false}
+                          triggerClassName="!p-0 !border-0 !w-auto !bg-transparent hover:!bg-transparent"
+                          menuClassName="bg-[#1e293b] border-white/10 p-1.5 backdrop-blur-xl"
+                          usePortal={true}
+                          side="bottom"
+                          align="end"
+                        >
+                          {onEditPage && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditPage(page);
+                              }}
+                              className="flex items-center gap-2 w-full p-2 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors text-left"
+                            >
+                              <Pencil className="w-4 h-4" />
+                              Edit Page
+                            </button>
+                          )}
+                          {onDeletePage && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeletePage(page);
+                              }}
+                              className="flex items-center gap-2 w-full p-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left mt-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete Page
+                            </button>
+                          )}
+                        </Dropdown>
+                      )
+                    }
                   />
                 </SortableItem>
               ))}

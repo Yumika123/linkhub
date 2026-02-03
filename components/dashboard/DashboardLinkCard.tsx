@@ -13,6 +13,7 @@ interface DashboardLinkCardProps {
   onEdit?: (id: string, formData: FormData) => void;
   onDelete?: (id: string) => void;
   view: "list" | "grid";
+  readOnly?: boolean;
 }
 
 export function DashboardLinkCard({
@@ -20,6 +21,7 @@ export function DashboardLinkCard({
   onEdit,
   onDelete,
   view,
+  readOnly = false,
 }: DashboardLinkCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const icon = getLinkIcon(link.url);
@@ -76,17 +78,21 @@ export function DashboardLinkCard({
 
   if (view === "grid") {
     return (
-      <div className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 cursor-grab active:cursor-grabbing">
-        <div className="absolute top-4 left-4 text-white/30 group-hover:text-white/50 transition-colors">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="9" cy="5" r="1.5" />
-            <circle cx="15" cy="5" r="1.5" />
-            <circle cx="9" cy="12" r="1.5" />
-            <circle cx="15" cy="12" r="1.5" />
-            <circle cx="9" cy="19" r="1.5" />
-            <circle cx="15" cy="19" r="1.5" />
-          </svg>
-        </div>
+      <div
+        className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300  ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""}`}
+      >
+        {!readOnly && (
+          <div className="absolute top-4 left-4 text-white/30 group-hover:text-white/50 transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="9" cy="5" r="1.5" />
+              <circle cx="15" cy="5" r="1.5" />
+              <circle cx="9" cy="12" r="1.5" />
+              <circle cx="15" cy="12" r="1.5" />
+              <circle cx="9" cy="19" r="1.5" />
+              <circle cx="15" cy="19" r="1.5" />
+            </svg>
+          </div>
+        )}
 
         <div className="flex flex-col h-full">
           <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center text-3xl mb-4">
@@ -124,35 +130,41 @@ export function DashboardLinkCard({
           </a>
         </div>
 
-        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-          <Button
-            onClick={() => setIsEditing(true)}
-            variant="brand"
-            buttonSize="sm"
-            rounded="lg"
-          >
-            Edit
-          </Button>
-          <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
-        </div>
+        {!readOnly && (
+          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="brand"
+              buttonSize="sm"
+              rounded="lg"
+            >
+              Edit
+            </Button>
+            <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
+          </div>
+        )}
       </div>
     );
   }
 
   // List view
   return (
-    <div className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 cursor-grab active:cursor-grabbing">
+    <div
+      className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""}`}
+    >
       <div className="flex items-start gap-4">
-        <div className="text-white/30 group-hover:text-white/50 transition-colors shrink-0 pt-3">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="9" cy="5" r="1.5" />
-            <circle cx="15" cy="5" r="1.5" />
-            <circle cx="9" cy="12" r="1.5" />
-            <circle cx="15" cy="12" r="1.5" />
-            <circle cx="9" cy="19" r="1.5" />
-            <circle cx="15" cy="19" r="1.5" />
-          </svg>
-        </div>
+        {!readOnly && (
+          <div className="text-white/30 group-hover:text-white/50 transition-colors shrink-0 pt-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="9" cy="5" r="1.5" />
+              <circle cx="15" cy="5" r="1.5" />
+              <circle cx="9" cy="12" r="1.5" />
+              <circle cx="15" cy="12" r="1.5" />
+              <circle cx="9" cy="19" r="1.5" />
+              <circle cx="15" cy="19" r="1.5" />
+            </svg>
+          </div>
+        )}
 
         <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center text-3xl shrink-0">
           {icon}
@@ -188,17 +200,19 @@ export function DashboardLinkCard({
           </a>
         </div>
 
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-          <Button
-            onClick={() => setIsEditing(true)}
-            variant="brand"
-            buttonSize="sm"
-            rounded="lg"
-          >
-            Edit
-          </Button>
-          <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
-        </div>
+        {!readOnly && (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="brand"
+              buttonSize="sm"
+              rounded="lg"
+            >
+              Edit
+            </Button>
+            <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
+          </div>
+        )}
       </div>
     </div>
   );
