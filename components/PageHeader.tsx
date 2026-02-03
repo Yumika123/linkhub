@@ -1,19 +1,27 @@
 "use client";
 
 import { Page, User } from "@prisma/client";
-import { Button } from "./ui";
 import { Copy, Check } from "lucide-react";
-import Image from "next/image";
 import { useState, useEffect } from "react";
+import { AvatarUpload } from "@/components/ui/AvatarUpload/AvatarUpload";
+import { updatePageAvatar, deletePageAvatar } from "@/app/actions/page-avatar";
 
 interface PageHeaderProps {
-  page: Pick<Page, "title" | "description" | "alias"> & {
+  page: Pick<
+    Page,
+    "id" | "title" | "description" | "alias" | "image" | "imagePublicId"
+  > & {
     owner?: Pick<User, "name" | "image"> | null;
   };
   children?: React.ReactNode;
+  isEditable?: boolean;
 }
 
-export function PageHeader({ page, children }: PageHeaderProps) {
+export function PageHeader({
+  page,
+  children,
+  isEditable = false,
+}: PageHeaderProps) {
   const [origin, setOrigin] = useState("");
   const [isCopied, setIsCopied] = useState(false);
 
@@ -29,19 +37,31 @@ export function PageHeader({ page, children }: PageHeaderProps) {
 
   return (
     <div className="flex flex-col items-center text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-md p-1 mb-6 shadow-2xl ring-4 ring-white/10 relative">
-        {page.owner?.image ? (
-          <Image
-            src={page.owner.image}
-            alt={page.owner.name || page.alias}
-            fill
-            className="rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center text-3xl font-bold text-white">
-            {(page.owner?.name?.[0] || page.alias[0]).toUpperCase()}
-          </div>
-        )}
+      <div className="flex justify-center mb-6">
+        <AvatarUpload
+          currentAvatar={page.image || page.owner?.image}
+          altText={page.title || page.alias}
+          isEditable={isEditable}
+          size="md"
+          onUpload={async (file) => {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("pageId", page.id);
+
+            const response = await fetch("/api/upload/page-avatar", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error);
+
+            await updatePageAvatar(page.id, data.url, data.publicId);
+          }}
+          onDelete={async () => {
+            const result = await deletePageAvatar(page.id);
+            if (!result.success) throw new Error(result.error);
+          }}
+        />
       </div>
 
       <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight drop-shadow-lg bg-clip-text text-transparent bg-linear-to-r from-white via-blue-100 to-purple-200">
