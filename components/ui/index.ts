@@ -18,4 +18,4 @@ export { Sidebar } from "./Sidebar/Sidebar";
 export * from "./Notification/useNotification";
 export * from "./Notification/NotificationContainer";
 export * from "./Dropdown/Dropdown";
-export * from "./SidebarItem/sidebar-item";
+export * from "./SidebarItem/SidebarItem";

@@ -53,7 +53,6 @@ export default async function DashboardAliasPage({
     <DashboardClient
       key={page.id}
       page={page}
-      userPages={userPages}
       session={session}
       readOnly={readOnly}
       isOrphan={isOrphan}
