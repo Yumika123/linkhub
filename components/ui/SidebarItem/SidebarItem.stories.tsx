@@ -21,6 +21,7 @@ export const Default: Story = {
     sublabel: "/personal",
     badge: 5,
     href: "#",
+    isPublic: true,
   },
 };
 
@@ -31,5 +32,6 @@ export const Active: Story = {
     badge: 12,
     href: "#",
     isActive: true,
+    isPublic: false,
   },
 };

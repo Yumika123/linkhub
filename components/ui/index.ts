@@ -19,3 +19,4 @@ export * from "./Notification/useNotification";
 export * from "./Notification/NotificationContainer";
 export * from "./Dropdown/Dropdown";
 export * from "./SidebarItem/SidebarItem";
+export { Switch } from "./Switch/Switch";

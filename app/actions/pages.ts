@@ -29,7 +29,7 @@ const CreatePageSchema = z.object({
       title: z.string().min(1).max(200),
       url: z.url(),
       image: z.url().optional(),
-    })
+    }),
   ),
 });
 
@@ -196,8 +196,8 @@ export async function reorderPages(items: { id: string; order: number }[]) {
       prisma.page.update({
         where: { id: item.id },
         data: { order: item.order },
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -208,7 +208,7 @@ export async function updatePage(
     isPublic?: boolean;
     title?: string;
     description?: string;
-  }
+  },
 ) {
   const validatedData = EditPageSchema.parse(data);
   const session = await auth();
@@ -258,5 +258,37 @@ export async function attachAnonymousPage(pageId: string) {
 
   revalidatePath("/dashboard");
   revalidatePath(`/${page.alias}`);
+  return { success: true };
+}
+
+export async function togglePagePublic(pageId: string, isPublic: boolean) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const page = await prisma.page.findFirst({
+    where: {
+      id: pageId,
+      ownerId: session.user.id,
+    },
+  });
+
+  if (!page) {
+    throw new Error("Page not found or unauthorized");
+  }
+
+  await prisma.page.update({
+    where: {
+      id: pageId,
+    },
+    data: {
+      isPublic: isPublic,
+    },
+  });
+
+  // Note: We intentionally skip revalidatePath here to avoid interfering with
+  // optimistic DnD reordering. The SidebarItem handles the UI update optimistically.
   return { success: true };
 }

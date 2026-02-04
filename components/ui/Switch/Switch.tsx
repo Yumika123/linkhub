@@ -36,16 +36,83 @@ const thumbVariants = cva(
   },
 );
 
+const circleVariants = cva(
+  "rounded-full transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+  {
+    variants: {
+      size: {
+        sm: "h-4 w-4",
+        md: "h-5 w-5",
+        lg: "h-6 w-6",
+      },
+    },
+    defaultVariants: {
+      size: "md",
+    },
+  },
+);
+
 export interface SwitchProps
   extends
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof switchVariants> {
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
+  variant?: "default" | "circle";
 }
 
 const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
-  ({ className, size, checked, onCheckedChange, onClick, ...props }, ref) => {
+  (
+    {
+      className,
+      size,
+      checked,
+      onCheckedChange,
+      onClick,
+      variant = "default",
+      ...props
+    },
+    ref,
+  ) => {
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (onCheckedChange) {
+        onCheckedChange(!checked);
+      }
+      onClick?.(e);
+    };
+
+    if (variant === "circle") {
+      return (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          data-state={checked ? "checked" : "unchecked"}
+          className={cn(
+            circleVariants({ size }),
+            // Glass morphism base
+            "backdrop-blur-md border",
+            // Conditional styling based on checked state
+            checked
+              ? [
+                  "bg-linear-to-br from-emerald-400/80 to-emerald-600/80",
+                  "border-emerald-300/50",
+                  "shadow-[0_0_12px_rgba(16,185,129,0.6),inset_0_1px_1px_rgba(255,255,255,0.3)]",
+                ]
+              : [
+                  "bg-linear-to-br from-white/20 to-white/5",
+                  "border-white/20",
+                  "shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]",
+                ],
+            className,
+          )}
+          onClick={handleClick}
+          ref={ref}
+          {...props}
+        />
+      );
+    }
+
     return (
       <button
         type="button"
@@ -57,12 +124,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
           checked ? "bg-green-500" : "bg-red-500",
           "shadow-inner",
         )}
-        onClick={(e) => {
-          if (onCheckedChange) {
-            onCheckedChange(!checked);
-          }
-          onClick?.(e);
-        }}
+        onClick={handleClick}
         ref={ref}
         {...props}
       >

@@ -204,6 +204,8 @@ export function DashboardSidebar({
                     label={page.title}
                     sublabel={`/${page.alias}`}
                     badge={page.links.length}
+                    pageId={page.id}
+                    isPublic={page.isPublic}
                     isActive={page.alias === currentPageAlias}
                     href={`/dashboard/${page.alias}`}
                     isDragging={isDragging}
@@ -221,7 +223,7 @@ export function DashboardSidebar({
                       (onEditPage || onDeletePage) && (
                         <Dropdown
                           trigger={
-                            <div className="p-1 rounded-md hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                            <div className="p-1 text-xs text-white/60 bg-white/10 rounded hover:bg-white/10 hover:text-white transition-colors align-center hover:cursor-pointer">
                               <MoreHorizontal className="w-4 h-4" />
                             </div>
                           }

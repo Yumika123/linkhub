@@ -124,7 +124,7 @@ export function Dropdown({
           setIsOpen(!isOpen);
         }}
         className={cn(
-          "w-full text-left focus:outline-none transition-all duration-200 relative",
+          "flex items-center w-full text-left focus:outline-none transition-all duration-200 relative",
           !triggerClassName &&
             "rounded-xl p-2 border border-transparent hover:cursor-pointer",
           !triggerClassName &&

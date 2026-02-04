@@ -17,6 +17,10 @@ const meta: Meta<typeof Switch> = {
       control: "select",
       options: ["sm", "md", "lg"],
     },
+    variant: {
+      control: "select",
+      options: ["default", "circle"],
+    },
   },
 };
 
@@ -57,4 +61,49 @@ export const Sizes: Story = {
 export const Interactive = () => {
   const [checked, setChecked] = useState(false);
   return <Switch checked={checked} onCheckedChange={setChecked} />;
+};
+
+export const CircleVariant: Story = {
+  args: {
+    variant: "circle",
+    checked: true,
+  },
+};
+
+export const CircleVariantUnchecked: Story = {
+  args: {
+    variant: "circle",
+    checked: false,
+  },
+};
+
+export const CircleSizes: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4 p-4 bg-slate-800 rounded-lg">
+      <div className="flex items-center gap-4">
+        <span className="text-sm text-white w-16">Small:</span>
+        <Switch variant="circle" size="sm" checked />
+        <Switch variant="circle" size="sm" checked={false} />
+      </div>
+      <div className="flex items-center gap-4">
+        <span className="text-sm text-white w-16">Medium:</span>
+        <Switch variant="circle" size="md" checked />
+        <Switch variant="circle" size="md" checked={false} />
+      </div>
+      <div className="flex items-center gap-4">
+        <span className="text-sm text-white w-16">Large:</span>
+        <Switch variant="circle" size="lg" checked />
+        <Switch variant="circle" size="lg" checked={false} />
+      </div>
+    </div>
+  ),
+};
+
+export const CircleInteractive = () => {
+  const [checked, setChecked] = useState(false);
+  return (
+    <div className="p-4 bg-slate-800 rounded-lg">
+      <Switch variant="circle" checked={checked} onCheckedChange={setChecked} />
+    </div>
+  );
 };
