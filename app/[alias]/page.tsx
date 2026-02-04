@@ -21,6 +21,7 @@ export default async function PublicPage({ params }: PublicPageProps) {
     include: {
       owner: true,
       links: {
+        where: { active: true },
         orderBy: { order: "asc" },
       },
     },

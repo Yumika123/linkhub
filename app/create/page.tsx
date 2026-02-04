@@ -42,6 +42,7 @@ type ClientLink = {
   updatedAt: Date;
   pageId: string;
   order: number;
+  active: boolean;
 };
 
 import { Page } from "@prisma/client";
@@ -109,6 +110,7 @@ export default function CreatePage() {
       updatedAt: new Date(),
       pageId: page.alias,
       order: links.length,
+      active: true,
     };
     setLinks([...links, link]);
     setShowAddForm(false);
@@ -150,6 +152,7 @@ export default function CreatePage() {
   };
 
   // TODO: add possibility to change page title and description
+  // TODO: remove possibility to activate/deactivate links on /create page
 
   return (
     <div className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white">
