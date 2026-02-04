@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useOptimistic, useTransition } from "react";
 import { Link as LinkModel } from "@prisma/client";
 import { getLinkIcon } from "@/lib/link-icons";
-import { editLink } from "@/app/actions/links";
+import { editLink, toggleLinkActive } from "@/app/actions/links";
+import { Switch } from "@/components/ui/Switch/Switch";
 import { Input } from "@/components/ui/Input/input";
 import { Button } from "@/components/ui/Button/button";
 import { DeleteLinkButton } from "../DeleteLinkButton";
@@ -25,6 +26,22 @@ export function DashboardLinkCard({
 }: DashboardLinkCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const icon = getLinkIcon(link.url);
+  const [optimisticActive, setOptimisticActive] = useOptimistic(
+    link.active,
+    (_, newActive: boolean) => newActive,
+  );
+  const [_, startTransition] = useTransition();
+
+  const handleToggle = async (checked: boolean) => {
+    startTransition(async () => {
+      setOptimisticActive(checked);
+      try {
+        await toggleLinkActive(link.id, checked);
+      } catch (error) {
+        setOptimisticActive(!checked);
+      }
+    });
+  };
 
   if (isEditing) {
     return (
@@ -79,18 +96,25 @@ export function DashboardLinkCard({
   if (view === "grid") {
     return (
       <div
-        className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300  ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""}`}
+        className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300  ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${!optimisticActive ? "opacity-50" : ""}`}
       >
         {!readOnly && (
-          <div className="absolute top-4 left-4 text-white/30 group-hover:text-white/50 transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="9" cy="5" r="1.5" />
-              <circle cx="15" cy="5" r="1.5" />
-              <circle cx="9" cy="12" r="1.5" />
-              <circle cx="15" cy="12" r="1.5" />
-              <circle cx="9" cy="19" r="1.5" />
-              <circle cx="15" cy="19" r="1.5" />
-            </svg>
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+            <div className="text-white/30 group-hover:text-white/50 transition-colors cursor-grab">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <circle cx="9" cy="5" r="1.5" />
+                <circle cx="15" cy="5" r="1.5" />
+                <circle cx="9" cy="12" r="1.5" />
+                <circle cx="15" cy="12" r="1.5" />
+                <circle cx="9" cy="19" r="1.5" />
+                <circle cx="15" cy="19" r="1.5" />
+              </svg>
+            </div>
           </div>
         )}
 
@@ -131,17 +155,31 @@ export function DashboardLinkCard({
         </div>
 
         {!readOnly && (
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-            <Button
-              onClick={() => setIsEditing(true)}
-              variant="brand"
-              buttonSize="sm"
-              rounded="lg"
+          <>
+            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+              <Button
+                onClick={() => setIsEditing(true)}
+                variant="brand"
+                buttonSize="sm"
+                rounded="lg"
+              >
+                Edit
+              </Button>
+              <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
+            </div>
+            {/* Status Indicator */}
+            <div
+              className="absolute bottom-4 right-4 z-10 flex items-center justify-center"
+              onPointerDown={(e) => e.stopPropagation()}
             >
-              Edit
-            </Button>
-            <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
-          </div>
+              <Switch
+                checked={optimisticActive}
+                onCheckedChange={handleToggle}
+                onClick={(e) => e.stopPropagation()}
+                title={optimisticActive ? "Deactivate link" : "Activate link"}
+              />
+            </div>
+          </>
         )}
       </div>
     );
@@ -150,19 +188,29 @@ export function DashboardLinkCard({
   // List view
   return (
     <div
-      className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""}`}
+      className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${!optimisticActive ? "opacity-50" : ""}`}
     >
       <div className="flex items-start gap-4">
         {!readOnly && (
-          <div className="text-white/30 group-hover:text-white/50 transition-colors shrink-0 pt-3">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="9" cy="5" r="1.5" />
-              <circle cx="15" cy="5" r="1.5" />
-              <circle cx="9" cy="12" r="1.5" />
-              <circle cx="15" cy="12" r="1.5" />
-              <circle cx="9" cy="19" r="1.5" />
-              <circle cx="15" cy="19" r="1.5" />
-            </svg>
+          <div
+            className="flex items-center gap-3 shrink-0 pt-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-white/30 group-hover:text-white/50 transition-colors cursor-grab">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <circle cx="9" cy="5" r="1.5" />
+                <circle cx="15" cy="5" r="1.5" />
+                <circle cx="9" cy="12" r="1.5" />
+                <circle cx="15" cy="12" r="1.5" />
+                <circle cx="9" cy="19" r="1.5" />
+                <circle cx="15" cy="19" r="1.5" />
+              </svg>
+            </div>
           </div>
         )}
 
@@ -211,6 +259,21 @@ export function DashboardLinkCard({
               Edit
             </Button>
             <DeleteLinkButton linkId={link.id} onDelete={onDelete} />
+          </div>
+        )}
+
+        {!readOnly && (
+          <div
+            className="absolute bottom-4 right-4 z-10 flex items-center justify-center"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Switch
+              checked={optimisticActive}
+              onCheckedChange={handleToggle}
+              size="sm"
+              title={optimisticActive ? "Deactivate link" : "Activate link"}
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         )}
       </div>

@@ -106,8 +106,8 @@ export async function reorderLinks(items: { id: string; order: number }[]) {
       prisma.link.update({
         where: { id: item.id },
         data: { order: item.order },
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -135,6 +135,32 @@ export async function editLink(linkId: string, formData: FormData) {
   await prisma.link.update({
     where: { id: linkId },
     data: { title, url },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/${link.page.alias}`);
+}
+
+export async function toggleLinkActive(linkId: string, active: boolean) {
+  const session = await auth();
+
+  const link = await prisma.link.findFirst({
+    where: {
+      id: linkId,
+      page: {
+        owner: {
+          id: session?.user?.id,
+        },
+      },
+    },
+    include: { page: { include: { owner: true } } },
+  });
+
+  if (!link) throw new Error("Unauthorized or not found");
+
+  await prisma.link.update({
+    where: { id: linkId },
+    data: { active },
   });
 
   revalidatePath("/dashboard");

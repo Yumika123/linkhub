@@ -83,6 +83,7 @@ model Link {
   title     String
   url       String
   target    String   @default("_blank") // "_blank", "_self", "_parent", "_top"
+  active    Boolean  @default(true)
   image     String?
   createdAt DateTime @default(now())
   order     Int      @default(0)
