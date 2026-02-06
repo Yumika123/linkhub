@@ -13,6 +13,7 @@ export type CreatePageData = {
   title?: string;
   description?: string | null;
   links?: { title: string; url: string; image?: string }[];
+  linkView?: "list" | "grid";
 };
 
 const CreatePageSchema = z.object({
@@ -31,6 +32,7 @@ const CreatePageSchema = z.object({
       image: z.url().optional(),
     }),
   ),
+  linkView: z.enum(["list", "grid"]).optional(),
 });
 
 const EditPageSchema = CreatePageSchema.omit({ links: true });
@@ -116,6 +118,7 @@ export async function createPage(data: CreatePageData) {
         ownerId,
         isPublic: true,
         type: "list",
+        linkView: validatedData.linkView || "list",
         links: {
           create:
             validatedData.links?.map((link, idx) => ({
@@ -290,5 +293,39 @@ export async function togglePagePublic(pageId: string, isPublic: boolean) {
 
   // Note: We intentionally skip revalidatePath here to avoid interfering with
   // optimistic DnD reordering. The SidebarItem handles the UI update optimistically.
+  return { success: true };
+}
+
+export async function updateLinkView(
+  pageId: string,
+  linkView: "list" | "grid",
+) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const page = await prisma.page.findFirst({
+    where: {
+      id: pageId,
+      ownerId: session.user.id,
+    },
+  });
+
+  if (!page) {
+    throw new Error("Page not found or unauthorized");
+  }
+
+  await prisma.page.update({
+    where: {
+      id: pageId,
+    },
+    data: {
+      linkView,
+    },
+  });
+
+  // Skip revalidatePath to avoid UI flicker during optimistic updates
   return { success: true };
 }

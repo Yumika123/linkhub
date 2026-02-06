@@ -43,7 +43,11 @@ export default async function PublicPage({ params }: PublicPageProps) {
       className="min-h-screen w-full relative font-sans text-white selection:bg-purple-500 selection:text-white"
       style={{ background: pageStyle?.background.color ?? undefined }}
     >
-      <PublicPageClient page={page} isOwner={isOwner} />
+      <PublicPageClient
+        page={page}
+        isOwner={isOwner}
+        linkView={(page.linkView as "list" | "grid") || "list"}
+      />
     </div>
   );
 }
