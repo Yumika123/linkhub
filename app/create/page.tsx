@@ -126,6 +126,7 @@ export default function CreatePage() {
       const result = await createPage({
         title: page.title,
         description: page.description,
+        linkView: view,
         links: links.map((l, index) => ({
           title: l.title,
           url: l.url,

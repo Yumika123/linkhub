@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as React from "react";
 import { Link as LinkModel, Page as PageModel } from "@prisma/client";
 import { Session } from "next-auth";
@@ -14,6 +14,7 @@ import { usePageStyles } from "@/hooks/usePageStyles";
 import { useView } from "@/hooks/useView";
 import { PageStyles } from "@/types/PageStyles";
 import { useUIStore } from "@/store/UIStore";
+import { updateLinkView } from "@/app/actions/pages";
 
 export type PageWithLinks = PageModel & {
   links: LinkModel[];
@@ -32,7 +33,23 @@ export function DashboardClient({
   readOnly,
   isOrphan,
 }: DashboardClientProps) {
-  const { view, ViewToggle } = useView({ defaultView: "list" });
+  const handleLinkViewChange = useCallback(
+    async (pageId: string, view: "list" | "grid") => {
+      try {
+        await updateLinkView(pageId, view);
+      } catch (error) {
+        console.error("Failed to save view preference:", error);
+      }
+    },
+    [],
+  );
+
+  const { view, ViewToggle } = useView({
+    defaultView: (page.linkView as "list" | "grid") || "list",
+    pageId: page.id,
+    onViewChange: handleLinkViewChange,
+  });
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAttachModal, setShowAttachModal] = useState(false);
 
